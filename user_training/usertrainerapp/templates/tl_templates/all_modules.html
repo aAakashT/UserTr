@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AJAX API Table</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Table</h1>
+  <table id="apiTable"></table>
+
+  <script>
+    $(document).ready(function() {
+      $.ajax({
+        url: "{% url 'get_modules' %}",
+        method: "GET",
+        data:'modules',
+        success: function(data) {
+          var table = $("#apiTable");
+          var tableData = "<tr><th>Title</th><th>Description</th><th>User</th><th>Created_by</th><th>Assigned_date</th></tr>";
+          for (var i = 0; i < data.length; i++) {
+            var row = "<tr>";
+            row += "<td>" + data[i].title + "</td>";
+            row += "<td>" + data[i].description + "</td>";
+            row += "<td>" + data[i].user + "</td>";
+            row += "<td>" + data[i].created_by + "</td>";
+            row += "<td>" + data[i].assigned_date + "</td>";
+            row += "</tr>";
+            tableData += row;
+          }
+          table.append(tableData);
+        },
+        error: function() {
+          alert("Failed to retrieve data from the API.");
+        }
+      });
+    });
+  </script>
+</body>

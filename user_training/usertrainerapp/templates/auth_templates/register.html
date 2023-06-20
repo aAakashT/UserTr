@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Registration</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#registration-form').submit(function(event) {
+                event.preventDefault(); // Prevent default form submission
+
+                var first_name = $('#first_name').val();
+                var last_name = $('#last_name').val();
+                var username = $('#username').val();
+                var password = $('#password').val();
+                var email = $('#email').val();
+
+                $.ajax({
+                    url: "{% url 'register'%}",
+                    method: 'POST',
+                    data: {
+                        first_name,
+                        last_name,
+                        username: username,
+                        password: password,
+                        email: email
+                    },
+                    success: function(response) {
+                
+                        $('#registration-message').text('Registration successful. Please log in.');
+                        $('#first_name').val('');
+                        $('#last_name').val('');
+                        $('#username').val('');
+                        $('#password').val('');
+                        $('#email').val('');
+                    },
+                    error: function(xhr, status, error) {
+                        $('#registration-message').text('Registration failed. Please try again.');
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    {% if user.is_authenticated %}
+    {{user}}
+    <form action="{% url 'logout_api'%}", method="post">
+        {% csrf_token %}
+        <button type="submit">logout</button>
+    </form>
+    {% else %}
+    <h1>User Registration</h1>
+    <form id="registration-form" method="POST">
+        {% csrf_token %}
+        <div>
+            <label for="first_name">Username:</label>
+            <input type="text" id="first_name" name="first_name" >
+        </div>
+        <div>
+            <label for="last_name">last_name:</label>
+            <input type="text" id="last_name" name="last_name" >
+        </div>
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        
+        <div>
+            <button type="submit">Register</button>
+        </div>
+    </form>
+    <div id="registration-message"></div>
+
+        <a href="{% url 'login'%}">Login</a>
+    {% endif %}
+</body>
+</html>

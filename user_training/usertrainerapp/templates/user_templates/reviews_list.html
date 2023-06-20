@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Training Modules</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h1>Reviews</h1>
+  <table id="apiTable"></table>
+
+  <script>
+    $(document).ready(function() {
+      $.ajax({
+        url: "{% url 'api_user_reviews' %}",
+        method: "GET",
+        data:'modules',
+        success: function(data) {
+          var table = $("#apiTable");
+          var tableData = "<tr><th>Comment</th><th>Date</th></tr>";
+          for (var i = 0; i < data.length; i++) {
+            var row = "<tr>";
+            // row += "<td>" + data[i].title + "</td>";
+            // row += "<td>" + data[i].description + "</td>";
+            // row += "<td>" + data[i].user + "</td>";
+            row += "<td>" + data[i].comment + "</td>";
+            row += "<td>" + data[i].date + "</td>";
+            row += "</tr>";
+            tableData += row;
+          }
+          table.append(tableData);
+        },
+        error: function() {
+          alert("Failed to retrieve data from the API.");
+        }
+      });
+      });
+   
+  </script>
+</body>
+</html>

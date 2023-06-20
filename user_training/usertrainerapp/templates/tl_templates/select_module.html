@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Assign Training</title>
+</head>
+<body>
+    <h1>Assign Training</h1>
+    
+    <form action="{% url 'assign_module' user.id %}" method="post">
+        {% csrf_token %}
+        
+        <label for="training_module">Select Training Module:</label>
+        <select name="training_module" id="training_module">
+            {% for training_module in training_modules %}
+            <option value="{{ training_module.id }}">{{ training_module.title }}</option>
+            {% endfor %}
+        </select>
+        
+        <input type="submit" value="Assign Training">
+    </form>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>User List</title>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+  <div class="card">
+    <div class="card-body">
+      <table id="asset-table" class="table table-striped" style="width: 100%; height: 30px;">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Modules</th>
+            <th>Reviews</th>
+            <th>Assign role</th>
+            <th>Assign tl</th>
+
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="api-response"></div>
+
+  <script>
+    $(document).ready(function() {
+  var RoleAssignModuleURL = '/api/assign/role/';
+  var TlAssignModuleURL = '/api/assign/tl/';
+  
+      var assetTable = $('#asset-table').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": "{% url 'api_user_list' %}",
+        "columns": [
+          { "data": "id" },
+          { "data": "username" },
+          { "data": "email" },
+          { "data": "first_name" },
+          { "data": "last_name" },
+          { 
+            "data": "modules",
+            "render": function(data, type, row, meta) {
+              if (data.length === 0) {
+                return "No modules assigned";
+              } else {
+                var reviewText = data.map(function(review) {
+                  return `title: ${review.title}, date: ${review.assigned_date}`;
+                }).join(", ");
+                return reviewText;
+              }
+            }
+          },
+          { 
+            "data": "reviews",
+            "render": function(data, type, row, meta) {
+              if (data.length === 0) {
+                return "No reviews";
+              } else {
+                var reviewText = data.map(function(review) {
+                  return `comment: ${review.comment}, date: ${review.date}`;
+                }).join(", ");
+                return reviewText;
+              }
+            }
+          },
+          {
+        "data": "id",
+        "render": function(data, type, row, meta) {
+          var url = RoleAssignModuleURL + data + '/';
+          var link = `<a href="${url}" class="TL-module" data-userid="${data}">Assign Role</a>`;
+          return link;
+        }
+      },
+      {
+        "data": "id",
+        "render": function(data, type, row, meta) {
+          var url = TlAssignModuleURL + data + '/';
+          var link = `<a href="${url}" class="ROLE-module" data-userid="${data}">Assign Tl</a>`;
+          return link;
+        }
+      },
+          
+        ]
+      });
+
+  $(document).on('click', '.TL-module', function() {
+    var userId = $(this).data('userid');
+
+    $.ajax({
+      url: `/api/assign/tl/${userId}/`,
+      method: "POST",
+      data: "{'id':'5'}",
+      success: function(response) {
+        $('#api-response').html(response);
+      },
+      error: function(xhr, status, error) {
+        console.log(error);
+      }
+    });
+    $(document).on('click', '.ROLE-module', function() {
+    var userId = $(this).data('userid');
+
+    $.ajax({
+      url: `/api/assign/role/${userId}/`,
+      method: "POST",
+      data: "{'id':'5'}",
+      success: function(response) {
+        $('#api-response').html(response);
+      },
+      error: function(xhr, status, error) {
+        console.log(error);
+      }
+    });
+  
+    });
+    });
+    });
+  </script>
+  
+</body>
+</html>
