@@ -1,23 +1,46 @@
-<p4>You already signed in </p4>
-<a href="{% url 'logout_api' %}">logout</a>
-<!-- dashboard.html -->
 
+</html>
 <!DOCTYPE html>
 <html>
 <head>
-    <!-- Your head content -->
+  <style>
+    .sidenav {
+      width: 200px;
+      background-color: #f1f1f1;
+      padding: 10px;
+    }
+    
+    .sidenav a {
+      display: block;
+      padding: 10px;
+      text-decoration: none;
+      color: #000;
+    }
+    
+    .sidenav a:hover {
+      background-color: #ddd;
+    }
+    
+    .content {
+      margin-left: 220px;
+      padding: 20px;
+    }
+  </style>
 </head>
 <body>
-    <!-- Your HTML content -->
-    
-    <div class="tab-container">
-        <ul class="tabs">
-            {% for tab in tabs %}
-                <li><a href="#">{{ tab }}</a></li>
-            {% endfor %}
-        </ul>
-        
-        <!-- Tab content goes here -->
-    </div>
+  <div class="sidenav">
+    <a href="#">Users</a>
+    <a href="#">Training Modules</a>
+    <a href="#"></a>
+    <a href="#"></a>
+  </div>
+  
+  <div class="content">
+    <h3>{{user}}</h3>
+    <p>This is the page.</p>
+  </div>
+  <p4>You already signed in </p4>
+<a href="{% url 'logout_api' %}">logout</a>
+
 </body>
 </html>

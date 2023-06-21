@@ -12,4 +12,4 @@ class IsTeamLead(BasePermission):
 class IsUser(BasePermission):
     def has_permission(self, request, view):
         return request.user.groups.filter(name = 'User')
-    # removed all .exists methods       
+      

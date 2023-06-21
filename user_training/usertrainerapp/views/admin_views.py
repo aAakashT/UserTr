@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from usertrainerapp.serializers import TrainingmoduleSerializer, UserSerializer
+from usertrainerapp.serializers import TrainingmoduleSerializer, UserSerializer, UserUpdateSerializer
 from usertrainerapp.models import TrainingModule, User 
 from usertrainerapp.permissions import IsAdmin
 from rest_framework.views import APIView
@@ -50,6 +50,13 @@ class TrainingListView(APIView):
         serializer = TrainingmoduleSerializer(training_modules, many=True)
        
         return Response(serializer.data)
+    # def get(self, request):
+    #     training_modules = TrainingModule.objects.all()
+    #     t_serializer = TrainingmoduleSerializer(training_modules, many=True)
+    #     users = User.objects.all()
+    #     u_serializer = UserSerializer(users, many=True)
+    #     content = [t_serializer.data, u_serializer]
+    #     return Response(content)
 
 def show_training_modules(request):
     return render(request, 'admin_templates/module_list.html')
@@ -64,21 +71,25 @@ class AssignTLView(APIView):
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response({'error': 'User not found.'}, status=404)
+        tl_users = User.objects.filter(groups=2)
 
-        context = {'user': user}
+        context = {'user': user, 'tl_users': tl_users}
         return Response(context)
 
     def post(self, request, user_id):
+        if tl_id == user_id:
+            return Response({'error': 'can not assign Tl to self'})
         try:
             user = User.objects.get(id=user_id)
         except:
             return Response({'error': 'TL ID is required.'}, status=400)
         # tl_group, created = Group.objects.get_or_create(name='Team_Leader')
-        if user.team_leader:
-            return Response({'error': 'can only assign Tl to user group'}, status=400)
+        # if user.groups == 2 or user.groups == 1:
+        #     return Response({'error': 'can only assign Tl to user group'}, status=400)
 
         tl_id = request.data.get('tl_id')
-
+        print(tl_id)
+        print()
         if not tl_id:
             return Response({'error': 'TL ID is required.'}, status=400)
         try:
@@ -87,7 +98,8 @@ class AssignTLView(APIView):
             return redirect('user_list')  
         user.team_leader = tl
         user.save()
-        return Response({'success': 'TL assigned successfully.'})
+        return redirect('show_users')
+
 
 class AssignRoleView(APIView):
     permission_classes = [IsAdmin]
@@ -109,10 +121,10 @@ class AssignRoleView(APIView):
         tl_group, created = Group.objects.get_or_create(name='Team_Leader')
         if not tl_group:
             return Response({'error': 'Role is required.'}, status=400)
-        if user.team_leader_id:
-            return Response({'error': 'Can not assign tl role to user otherthan user'})
+        if user.team_leader:
+            return Response({'error': 'Can not assign tl role to user otherthan user'}, status=400)
         user.groups.add(tl_group)
-        return Response({'success': 'Role assigned successfully.'})
+        return redirect('show_users')
 
 class UserDeleteView(APIView):
     permission_classes = [IsAdmin]
@@ -128,14 +140,14 @@ class UserDeleteView(APIView):
         context = {'user': user}
         return Response(context)
 
-    def put(self, request, user_id):
+    def post(self, request, user_id):
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response({'error': 'User does not exist.'}, status=status.HTTP_404_NOT_FOUND)
         user.is_active = False
         user.save()
-        return Response({'success': 'User deleted successfully.'})
+        return redirect('show_users')
 
 class UserUpdateView(APIView):
     permission_classes = [IsAdmin]
@@ -155,17 +167,27 @@ class UserUpdateView(APIView):
         context = {'user': user, 'team_leaders': team_leaders}
         return Response(context)
     
-    def put(self, request, user_id):
+    def post(self, request, user_id):
+        # print(request.__dict__)
+        email = request.data['email']
+        username = request.data['username']
+        team_lead_id = request.data['team_leader']
         try:
             user = User.objects.get(id=user_id)
+            print(user.__dict__)
         except User.DoesNotExist:
             return Response({'error': 'User does not exist.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = UserSerializer(user, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        user.email = email
+        user.username = username
+        if team_lead_id:
+            try:
+                team_leader = User.objects.get(id=team_lead_id)
+            except User.DoesNotExist:
+                return Response({'error': 'User does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+            user.team_leader = team_leader
+        user.save()
+        return redirect('show_users')
+            
 class TrainingUpdateView(APIView):
     permission_classes = [IsAdmin]
     renderer_classes = [TemplateHTMLRenderer]
@@ -180,7 +202,7 @@ class TrainingUpdateView(APIView):
         context = {'user': user}
         return Response(context)
 
-    def put(self, request, module_id):
+    def post(self, request, module_id):
         try:
             training_module = TrainingModule.objects.get(id=module_id)
         except TrainingModule.DoesNotExist:
@@ -205,10 +227,14 @@ class TrainingDeleteView(APIView):
         context = {'user': user}
         return Response(context)
 
-    def delete(self, request, module_id):
+    def post(self, request, module_id):
         try:
             training_module = TrainingModule.objects.get(id=module_id)
         except TrainingModule.DoesNotExist:
             return Response({'error': 'Training module does not exist.'}, status=status.HTTP_404_NOT_FOUND)
         training_module.delete()
         return Response({'success': 'Training module deleted successfully.'})
+
+
+def admin_dashboard_view(request):
+    return render(request, 'admin_templates/admin_dashboard.html')

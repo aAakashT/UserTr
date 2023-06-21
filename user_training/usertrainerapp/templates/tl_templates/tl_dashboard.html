@@ -1,0 +1,106 @@
+
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+body {
+  background-color: #f8f8f8;
+  margin: 0;
+}
+
+.navbar {
+  background-color: #bbecea;
+  padding: 20px;
+}
+
+.navbar ul {
+  list-style-type: none;
+  padding: 1;
+  margin: 0;
+}
+
+.navbar li {
+  display: inline;
+  padding: 30px;
+}
+
+.navbar a {
+  text-decoration: none;
+  color: #333;
+}
+
+.navbar a:hover {
+  background-color: #9dc3e2;
+}
+
+.content {
+  padding: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: inline-block;
+            width: 150px;
+            vertical-align: top;
+        }
+        .form-group input {
+            display: inline-block;
+            width: 250px;
+        }
+    
+</style>
+{% block head %}
+{% endblock %}
+
+</head>
+<body>
+  <ul>
+
+  </ul>
+ 
+  <!-- <div class="sidenav">
+    <a href="/show/users/">Users</a>
+    <a href="/training/modules/">Modules</a>
+    <a href="#"></a>
+    <a href="#"></a> -->
+  </div>
+  <div class="navbar">
+    <ul>
+        <li><p2><a href="/render/users/">Users</a>
+        </p2></li>
+        <li><p2><a href="/render/modules/">Training Modules</a>
+        </p2></li>                </ul>
+</div>
+<ul>
+    
+  </ul>
+  <ul>
+
+    <li><p4> signed in as {{user}}</p4> </li> 
+    
+    <a href="{% url 'logout_api' %}">logout</a>
+  </ul>
+  {% block content %}
+  {% endblock %}
+</body>
+</html>
+

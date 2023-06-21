@@ -1,4 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'tl_templates/tl_dashboard.html' %}
+{% block head %}
+{% endblock %}
 
 {% block content %}
   <h2>Review Details</h2>
@@ -6,7 +8,6 @@
   <p><strong>User:</strong> {{ review.user }}</p>
   <p><strong>Team Leader:</strong> {{ review.team_leader }}</p>
   <p><strong>Comment:</strong> {{ review.comment }}</p>  
-  <a href="{% url 'update_review' %}" class="btn btn-primary">Back to Review List</a><br>
-  <a href="{% url 'delete_review' %}" class="btn btn-primary">Back to Review List</a><br>
-  <a href="{% url 'review_list' %}" class="btn btn-primary">Back to Review List</a><br>
+  <a href="{% url 'update_review' review.id %}" class="btn btn-primary">update</a><br>
+  <a href="{% url 'delete_review' review.id %}" class="btn btn-primary">delete</a><br>
 {% endblock %}

@@ -1,5 +1,5 @@
-{% extends 'base.html' %}
-  {% block head %}
+{% extends 'admin_templates/admin_dashboard.html' %}
+{% block head %}
   <title>Assign Role</title>
   {% endblock %}
 
@@ -10,7 +10,7 @@
     <label for="role">Select Role:</label>
     <select id="role" name="role">
       <option value="Team_Leader">Team Leader</option>
-      <option value="User">Other Role</option>
+      <option value="User">User Role</option>
     </select>
     <br>
     <button type="submit">Assign</button>

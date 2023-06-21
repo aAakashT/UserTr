@@ -19,7 +19,6 @@ from django.urls import path
 from usertrainerapp.views.user_views import render_modules, render_reviews, show_modules, show_reviews
 from rest_framework.routers import DefaultRouter
 
-# The API URLs are now determined automatically by the router.
 urlpatterns = [
     path('api/user/modules/', render_modules, name='api_user_modules'),
     path('api/user/reviews/', render_reviews, name='api_user_reviews'),

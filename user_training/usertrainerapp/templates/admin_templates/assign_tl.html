@@ -1,17 +1,20 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'admin_templates/admin_dashboard.html' %}
+
+{% block head %}
   <title>Assign Team Leader</title>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
   <h1>Assign Team Leader</h1>
   <form method="post" action="{% url 'api_assign_tl' user.id %}">
     {% csrf_token %}
-    <label for="tl_id">Team Leader ID:</label>
-    <input type="text" id="tl_id" name="tl_id">
+    <label for="tl_id">Team Leader:</label>
+    <select id="tl_id" name="tl_id">
+      {% for tl_user in tl_users %}
+        <option value="{{ tl_user.id }}">{{ tl_user.username }}</option>
+      {% endfor %}
+    </select>
     <br>
     <button type="submit">Assign</button>
   </form>
-</body>
-</html>
-
+{% endblock %}

@@ -1,6 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'tl_templates/tl_dashboard.html' %}
+{% block head %}
   <title>AJAX API Table</title>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
@@ -14,8 +13,9 @@
       border-bottom: 1px solid #ddd;
     }
   </style>
-</head>
-<body>
+  {% endblock %}
+
+  {% block content %}
   <h1>API Table</h1>
   <table id="apiTable"></table>
 
@@ -46,4 +46,5 @@
       });
     });
   </script>
-</body>
+
+{% endblock %}

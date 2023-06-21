@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'admin_templates/admin_dashboard.html' %}
+{% block head %}
   <title>Update User</title>
-</head>
-<body>
+  {% endblock %}
+  {% block content %}
   <h1>Update User</h1>
-  <form method="put" action="{% url 'user_update' user.id %}">
+  <form method="post" action="{% url 'user_update' user.id %}">
     {% csrf_token %}
     <label for="email">Email:</label>
     <input type="email" id="email" name="email" value="{{ user.email }}">
@@ -26,5 +25,4 @@
     <br>
     <button type="submit">Update</button>
   </form>
-</body>
-</html>
+  {% endblock %}

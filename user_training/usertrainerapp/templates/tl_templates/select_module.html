@@ -1,9 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'tl_templates/tl_dashboard.html' %}
+{% block head %}
     <title>Assign Training</title>
-</head>
-<body>
+    {% endblock %}
+
+    {% block content %}
     <h1>Assign Training</h1>
     
     <form action="{% url 'assign_module' user.id %}" method="post">
@@ -18,5 +18,4 @@
         
         <input type="submit" value="Assign Training">
     </form>
-</body>
-</html>
+    {% endblock %}

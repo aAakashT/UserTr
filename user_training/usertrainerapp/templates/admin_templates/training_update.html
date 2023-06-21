@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'admin_templates/admin_dashboard.html' %}
+{% block head %}
   <title>Update Training Module</title>
-</head>
-<body>
+  {% endblock %}
+  {% block content %}
   <h1>Update Training Module</h1>
   <form method="post" action="{% url 'training_update' module.id %}">
     {% csrf_token %}
@@ -15,5 +14,4 @@
     <br>
     <button type="submit">Update</button>
   </form>
-</body>
-</html>
+  {% endblock %}

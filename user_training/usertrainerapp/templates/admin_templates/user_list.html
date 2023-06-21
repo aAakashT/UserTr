@@ -1,13 +1,13 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'admin_templates/admin_dashboard.html' %}
+{% block head %}
   <meta charset="UTF-8">
   <title>User List</title>
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-</head>
-<body>
+{% endblock %}
+{% block content %}
+
   <div class="card">
     <div class="card-body">
       <table id="asset-table" class="table table-striped" style="width: 100%; height: 30px;">
@@ -34,7 +34,6 @@
 
   <div id="api-response"></div>
 
-  <!-- User Update Form -->
   <div id="update-form" style="display: none;">
     <h3>Update User</h3>
     <form id="update-user-form">
@@ -166,11 +165,10 @@
         console.log(error);
       }
     });
-    // Delete Record
     $(document).on('click', '.delete-user', function(e) {
   e.preventDefault();
   var userId = $(this).data('userid');
-  var username = $(this).closest('tr').find('.username').text(); // Get the username from the table
+  var username = $(this).closest('tr').find('.username').text(); 
   var confirmation = confirm(`Are you sure you want to delete the user '${username}'?`);
   
   if (confirmation) {
@@ -181,7 +179,6 @@
       method: "DELETE",
       success: function(response) {
         alert('User deleted successfully');
-        // Refresh the table
         assetTable.ajax.reload();
       },
       error: function(xhr, status, error) {
@@ -195,10 +192,9 @@
         var userId = $(this).data('userid');
         var url = `/users/update/${userId}/`;
 
-        // Show the update form
+       
         $('#update-form').show();
 
-        // Populate the form fields with existing data
         var rowData = assetTable.row($(this).closest('tr')).data();
         $('#user-id').val(rowData.id);
         $('#username').val(rowData.username);
@@ -206,7 +202,6 @@
         $('#first-name').val(rowData.first_name);
         $('#last-name').val(rowData.last_name);
 
-        // Submit the form
         $('#update-user-form').on('submit', function(e) {
           e.preventDefault();
 
@@ -222,12 +217,17 @@
             method: "PUT",
             data: updatedData,
             success: function(response) {
-              alert('User updated successfully');
-              // Hide the update form
-              $('#update-form').hide();
-              // Refresh the table
-              assetTable.ajax.reload();
-            },
+            //   alert('User updated successfully');
+            //   $('#update-form').hide();
+            //   assetTable.ajax.reload();
+            // },
+            if (response) {
+                            $('#update-message').text('updated successful. Redirecting...');
+                            window.location.href = 'show/users/';
+                        } else {
+                            $('#update-message').text('update failed. Please try again.');
+                        }
+                      },
             error: function(xhr, status, error) {
               console.log(error);
             }
@@ -235,34 +235,26 @@
         });
 
         $(document).ready(function() {
-    // Define a function to handle the API request and response
     function handleAPICall(url, method, data) {
         $.ajax({
             url: url,
             method: method,
             data: data,
             success: function(response) {
-                // Process the successful API response
                 console.log(response);
                 
-                // Update the page content with the response data
-                // Example: Display the response in a specific HTML element
                 $('#responseElement').text(response);
             },
             error: function(xhr, status, error) {
-                // Process the error response
                 console.error(xhr.responseText);
             }
         });
     }
     
-    // Example usage: Make an API request when a button is clicked
     $('#myButton').click(function() {
         var url = '/api/training/create/';
         var method = 'POST';
         var data = {
-            // Add any required request data
-            // Example: 'name': 'Training Name'
         };
         
         handleAPICall(url, method, data);
@@ -284,10 +276,9 @@
     window.location.href = '/api/training/create/';
   }
 </script><button class="btn btn-primary" onclick="visitPagecreate();" >CreateTraining</button></br> <br>
-<script>
+<!-- <script>
   function visitPagelogout(){
     window.location.href = '/api/logout/';
   }
-</script><button class="btn btn-primary" onclick="visitPagelogout();" >LogOut</button></br> 
-</body>
-</html>
+</script><button class="btn btn-primary" onclick="visitPagelogout();" >LogOut</button></br>  -->
+{% endblock %}

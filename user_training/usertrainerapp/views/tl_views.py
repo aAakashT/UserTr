@@ -9,6 +9,7 @@ from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
 from django.core.mail import send_mail
 from django.conf import settings
+from django.urls import reverse_lazy
 import json
 @api_view(['GET'])
 @permission_classes([IsTeamLead])
@@ -112,6 +113,7 @@ class WriteReview(APIView):
         review = Review.objects.create(user=user, team_leader=team_leader, comment=comment)
         serializer = ReviewSerializer(review)
 
+        return redirect(reverse_lazy(''))
         return Response({'success': 'Review submitted', 'review': serializer.data})
 
 
@@ -143,7 +145,8 @@ class UpdateReview(APIView):
         review.save()
 
         serializer = ReviewSerializer(review)
-        return Response({'success': 'Review updated', 'review': serializer.data})
+        return redirect(reverse_lazy(f'render_users'))
+        
 
 
 class DeleteReview(APIView):
@@ -156,7 +159,8 @@ class DeleteReview(APIView):
             return Response({'error': 'Review not found.'}, status=404)
 
         review.delete()
-        return Response({'success': 'Review deleted'})
+        return redirect(reverse_lazy(f'render_users'))
+        # return Response({'success': 'Review deleted'})
 
 class ViewReview(APIView):
     permission_classes = [IsTeamLead]
@@ -172,3 +176,6 @@ class ViewReview(APIView):
         serializer = ReviewSerializer(review)
         context = {'review': serializer.data}
         return Response(context)
+
+def tl_dashboard_view(request):
+    return render(request, 'tl_templates/tl_dashboard.html')

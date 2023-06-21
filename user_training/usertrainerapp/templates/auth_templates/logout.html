@@ -1,9 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'auth_templates/dashboard.html' %}
+{% block head %}
   <title>LogOut</title>
-</head>
-<body>
+  {% endblock %}
+
+{% block content %}
     <h1>Logout</h1>
     {{ user }}
   <p>Are you sure you want to logout</p>
@@ -11,5 +11,4 @@
     {% csrf_token %}
     <button type="submit">Logout</button>
   </form>
-</body>
-</html>
+  {% endblock %}

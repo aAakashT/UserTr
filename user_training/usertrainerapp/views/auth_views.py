@@ -42,9 +42,31 @@ class LoginApi(APIView):
         # print(user)
         if user:
             login(request, user)
+            if request.user.is_authenticated:
+                print("yes")
+                groups = request.user.groups.all()
+                if groups.filter(name='Admin').exists():
+                    return redirect('admin_dashboard')
+                elif groups.filter(name='Team_Leader').exists():
+                    return redirect('tl_dashboard')
+                elif groups.filter(name='User').exists():
+                    return redirect('user_dashboard')
+            # group = user.groups.first()
+            # ad_group, _ = Group.objects.get_or_create("Admin")
+            # tl_group, _ = Group.objects.filte("Team_Lead")
+            # user_group, _ = Group.objects.get("User")
+            # print(type(tl_group))
+            # print(group.name)
+            # if group.name == 'Team_Leader':
+            #     return redirect('tl_dashboard')  
+            # elif group.name == 'Admin':
+            #     return redirect('admin_dashboard')  
+            # elif group.name == 'User':
+            #     return redirect('user_dashboard') 
+
             session_key = request.session.session_key
             request.session.set_expiry(0)
-            return redirect(reverse_lazy('dashbord'))
+            return redirect(reverse_lazy('dashboard'))
 
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -75,22 +97,15 @@ def register_view(request):
 def dashboard_view(request):
     return render(request, 'dashboard.html')
 
-# views.py
-
-
-
-@login_required
-def dashboard(request):
-    user = request.user
-    tabs = []
-    
-    if user.has_perm('app.view_tab1'):
-        tabs.append('Tab 1')
-    
-    if user.has_perm('app.view_tab2'):
-        tabs.append('Tab 2')
-    
-    if user.has_perm('app.view_tab3'):
-        tabs.append('Tab 3')
-    
-    return render(request, 'dashboard.html', {'tabs': tabs})
+def handle_redirect(request):
+    if request.user.is_authenticated:
+        print("yes")
+        groups = request.user.groups.all()
+        if groups.filter(name='Admin').exists():
+            return redirect('admin_dashboard')
+        elif groups.filter(name='Team_Leader').exists():
+            return redirect('tl_dashboard')
+        elif groups.filter(name='User').exists():
+            return redirect('user_dashboard')
+        else:
+            redirect('dashboard')

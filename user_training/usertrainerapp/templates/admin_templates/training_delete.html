@@ -1,14 +1,12 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'admin_templates/admin_dashboard.html' %}
+{% block head %}
   <title>Delete Training Module</title>
-</head>
-<body>
+  {% endblock %}
+  {% block content %}
   <h1>Delete Training Module</h1>
   <p>Are you sure you want to delete the training module?</p>
-  <form method="post" action="{% url 'training_delete' module.id %}">
+  <form method="put" action="{% url 'training_delete' module.id %}">
     {% csrf_token %}
     <button type="submit">Delete</button>
   </form>
-</body>
-</html>
+  {% endblock %}

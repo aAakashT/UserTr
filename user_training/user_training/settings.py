@@ -142,3 +142,4 @@ EMAIL_HOST_USER = 'thorveaakash0@gmail.com'
 EMAIL_HOST_PASSWORD = 'trxbtlcdxqdbqcsq'  
 EMAIL_USE_TLS = True  
 DEFAULT_FROM_EMAIL = 'thorveaakash0@gmail.com'  
+

@@ -1,13 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'tl_templates/tl_dashboard.html' %}
+{% block head %}
+
   <meta charset="UTF-8">
   <title>User List</title>
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-</head>
-<body>
+{% endblock %}
+{% block content %}
+
   <div class="card">
     <div class="card-body">
       <table id="asset-table" class="table table-striped" style="width: 50%; height: 30px;">
@@ -66,7 +67,6 @@
                 var reviewText = data.map(function(review) {
         var link = `<a href="/reviews/${review.id}">${review.comment}</a> (Date: ${review.date})`;
         return link;
-                  // return `comment: ${review.comment}, date: ${review.date}`;
                 }).join(", ");
                 return reviewText;
               }
@@ -124,5 +124,5 @@
 
 
   </script>
-</body>
-</html>
+{% endblock %}
+

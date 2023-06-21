@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from usertrainerapp.views.admin_views import TrainingCreateView, TrainingDeleteView, UserListView, TrainingUpdateView, TrainingListView,AssignTLView, AssignRoleView, show_training_modules, show_users, UserDeleteView, UserUpdateView
+from usertrainerapp.views.admin_views import TrainingCreateView, admin_dashboard_view,TrainingDeleteView, UserListView, TrainingUpdateView, TrainingListView,AssignTLView, AssignRoleView, show_training_modules, show_users, UserDeleteView, UserUpdateView
 
 
 
@@ -32,6 +32,7 @@ urlpatterns = [
     path('users/update/<int:user_id>/', UserUpdateView.as_view(), name='user_update'),
     path('training/update/<int:module_id>/', TrainingUpdateView.as_view(), name='training_update'),
     path('training/delete/<int:module_id>/', TrainingDeleteView.as_view(), name='training_delete'),
+    path('ad/dashboard/', admin_dashboard_view , name = 'admin_dashboard'),
     
     
     path('training/modules/', show_training_modules, name='training_modules'),
