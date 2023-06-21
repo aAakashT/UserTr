@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Assign Team Leader</title>
+</head>
+<body>
+  <h1>Assign Team Leader</h1>
+  <form method="post" action="{% url 'api_assign_tl' user.id %}">
+    {% csrf_token %}
+    <label for="tl_id">Team Leader ID:</label>
+    <input type="text" id="tl_id" name="tl_id">
+    <br>
+    <button type="submit">Assign</button>
+  </form>
+</body>
+</html>
+

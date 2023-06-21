@@ -10,16 +10,16 @@
 <body>
   <div class="card">
     <div class="card-body">
-      <button id="api-button" class="btn btn-primary">Open API Endpoint</button>
       <table id="asset-table" class="table table-striped" style="width: 50%; height: 30px;">
         <thead>
           <tr>
             <th>ID</th>
             <th>Username</th>
             <th>Email</th>
-            <th>Assign Module</th>
             <th>Module</th>
             <th>Reviews</th>
+            <th>Assign Module</th>
+            <th>Write_review</th>
           </tr>
         </thead>
         <tbody>
@@ -32,7 +32,8 @@
 
   <script>
    $(document).ready(function() {
-  var baseAssignModuleURL = '/assign/modules/';
+  var AssignModuleURL = '/assign/modules/';
+  var baseAssignModuleURL = '/review/';
 
   var assetTable = $('#asset-table').DataTable({
     "processing": true,
@@ -42,14 +43,7 @@
       { "data": "id" },
       { "data": "username" },
       { "data": "email" },
-      {
-        "data": "id",
-        "render": function(data, type, row, meta) {
-          var url = baseAssignModuleURL + data + '/';
-          var link = `<a href="${url}" class="open-module" data-userid="${data}">AssignModules</a>`;
-          return link;
-        }
-      },
+      
       { 
             "data": "modules",
             "render": function(data, type, row, meta) {
@@ -70,16 +64,34 @@
                 return "No reviews";
               } else {
                 var reviewText = data.map(function(review) {
-                  return `comment: ${review.comment}, date: ${review.date}`;
+        var link = `<a href="/reviews/${review.id}">${review.comment}</a> (Date: ${review.date})`;
+        return link;
+                  // return `comment: ${review.comment}, date: ${review.date}`;
                 }).join(", ");
                 return reviewText;
               }
             }
-          }
+          },
+          {
+        "data": "id",
+        "render": function(data, type, row, meta) {
+          var url = AssignModuleURL + data + '/';
+          var link = `<a href="${url}" class="open-m" data-userid="${data}">AssignModules</a>`;
+          return link;
+        }
+      },
+      {
+        "data": "id",
+        "render": function(data, type, row, meta) {
+          var url = baseAssignModuleURL + data + '/';
+          var link = `<a href="${url}" class="open-module" data-userid="${data}">WriteReviews</a>`;
+          return link;
+        }
+      },
     ]
   });
 
-  $(document).on('click', '.open-module', function() {
+  $(document).on('click', '.open-m', function() {
     var userId = $(this).data('userid');
 
     $.ajax({
@@ -92,7 +104,22 @@
         console.log(error);
       }
     });
+
+  $(document).on('click', '.open-module', function() {
+    var userId = $(this).data('userid');
+
+    $.ajax({
+      url: `/review/${userId}/`,
+      method: "GET",
+      success: function(response) {
+        $('#api-response').html(response);
+      },
+      error: function(xhr, status, error) {
+        console.log(error);
+      }
+    });
   });
+});
 });
 
 

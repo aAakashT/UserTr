@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Update Review</h2>
+  <form method="post">
+    {% csrf_token %}
+    <textarea name="comment" rows="4" cols="50" placeholder="Enter your comment">{{ review.comment }}</textarea>
+    <br>
+    <button type="submit">Update</button>
+  </form>
+{% endblock %}

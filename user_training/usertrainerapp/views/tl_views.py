@@ -83,3 +83,92 @@ def assign_modules_UI(request):
 
 def render_assign_page(request):
     return render(request, 'tl_templates/select_module.html')
+
+class WriteReview(APIView):
+    permission_classes = [IsTeamLead,]
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'tl_templates/write_review.html'
+
+    def get(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=404)
+
+        context = {'user': user}
+        return Response(context)
+
+    def post(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=404)
+
+        team_leader = request.user
+        comment = request.data.get('comment')
+        if not comment:
+            return Response({'error': 'Comment is required'}, status=400)
+
+        review = Review.objects.create(user=user, team_leader=team_leader, comment=comment)
+        serializer = ReviewSerializer(review)
+
+        return Response({'success': 'Review submitted', 'review': serializer.data})
+
+
+class UpdateReview(APIView):
+    permission_classes = [IsTeamLead]
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'tl_templates/update_review.html'
+
+    def get(self, request, review_id):
+        try:
+            review = Review.objects.get(id=review_id)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found.'}, status=404)
+
+        context = {'review': review}
+        return Response(context)
+
+    def post(self, request, review_id):
+        try:
+            review = Review.objects.get(id=review_id)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found.'}, status=404)
+
+        comment = request.data.get('comment')
+        if not comment:
+            return Response({'error': 'Comment is required'}, status=400)
+
+        review.comment = comment
+        review.save()
+
+        serializer = ReviewSerializer(review)
+        return Response({'success': 'Review updated', 'review': serializer.data})
+
+
+class DeleteReview(APIView):
+    permission_classes = [IsTeamLead]
+
+    def delete(self, request, review_id):
+        try:
+            review = Review.objects.get(id=review_id)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found.'}, status=404)
+
+        review.delete()
+        return Response({'success': 'Review deleted'})
+
+class ViewReview(APIView):
+    permission_classes = [IsTeamLead]
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'tl_templates/one_review.html'
+
+    def get(self, request, review_id):
+        try:
+            review = Review.objects.get(id=review_id)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found.'}, status=404)
+
+        serializer = ReviewSerializer(review)
+        context = {'review': serializer.data}
+        return Response(context)

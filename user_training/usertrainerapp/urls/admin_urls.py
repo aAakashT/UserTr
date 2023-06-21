@@ -16,14 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from usertrainerapp.views.admin_views import TrainingCreateView, UserListView, TrainingListView,AssignTLView, AssignRoleView, show_training_modules, show_users
+from usertrainerapp.views.admin_views import TrainingCreateView, TrainingDeleteView, UserListView, TrainingUpdateView, TrainingListView,AssignTLView, AssignRoleView, show_training_modules, show_users, UserDeleteView, UserUpdateView
 
-app_name = 'admin2'
-app = 'home'
-url = "hi"
-# path = "/"
-# migrations = ""
-template_name = ""
 
 
 
@@ -34,7 +28,12 @@ urlpatterns = [
     path('api/training/list/', TrainingListView.as_view(), name='api_training_list'),
     path('api/assign/tl/<int:user_id>/', AssignTLView.as_view(), name='api_assign_tl'),
     path('api/assign/role/<int:user_id>/', AssignRoleView.as_view(), name='api_assign_role'),
-
+    path('users/delete/<int:user_id>/', UserDeleteView.as_view(), name='user_delete'),
+    path('users/update/<int:user_id>/', UserUpdateView.as_view(), name='user_update'),
+    path('training/update/<int:module_id>/', TrainingUpdateView.as_view(), name='training_update'),
+    path('training/delete/<int:module_id>/', TrainingDeleteView.as_view(), name='training_delete'),
+    
+    
     path('training/modules/', show_training_modules, name='training_modules'),
     path('show/users/', show_users, name='show_users'),
 ]

@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from usertrainerapp.views.tl_views import  api_get_users, render_users,api_get_modules, AssignModules, render_modules
+from usertrainerapp.views.tl_views import  api_get_users, render_users,api_get_modules,ViewReview, UpdateReview, DeleteReview, WriteReview, AssignModules, render_modules
 from django.urls import path
 urlpatterns = [
     path('get/users/', api_get_users, name = 'get_users'),
@@ -23,6 +23,11 @@ urlpatterns = [
     path('render/modules/', render_modules, name = 'render_modules'),
     path('render/users/', render_users, name = 'render_users'),
     path('assign/modules/<int:user_id>/', AssignModules.as_view(), name = 'assign_module'),
+    path('review/<int:user_id>/', WriteReview.as_view(), name='write_review'),
+    path('review/update/<int:user_id>/', UpdateReview.as_view(), name='update_review'),
+    path('review/delete/<int:user_id>/', DeleteReview.as_view(), name='delete_review'),
+    path('reviews/<int:review_id>/', ViewReview.as_view(), name='view_review'),
+
     # path('assign/modules/', assign_modules, name = 'assign_module'),
     # path('assign/modules/', assign_modules, name = 'assign_module'),
     # path('assign/modules/', assign_modules, name = 'assign_module'),

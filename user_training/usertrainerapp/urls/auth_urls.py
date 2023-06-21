@@ -24,7 +24,7 @@ from rest_framework.routers import DefaultRouter
 # router.register(r'api/register', UserRegistration,basename="register")
 # # for i in router.urls:
 # #     print(i)
-app_name = 'auth'
+# app_name = 'auth'
 
 
 urlpatterns = [

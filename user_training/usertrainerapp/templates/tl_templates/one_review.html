@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Review Details</h2>
+  <p><strong>Review ID:</strong> {{ review.id }}</p>
+  <p><strong>User:</strong> {{ review.user }}</p>
+  <p><strong>Team Leader:</strong> {{ review.team_leader }}</p>
+  <p><strong>Comment:</strong> {{ review.comment }}</p>  
+  <a href="{% url 'update_review' %}" class="btn btn-primary">Back to Review List</a><br>
+  <a href="{% url 'delete_review' %}" class="btn btn-primary">Back to Review List</a><br>
+  <a href="{% url 'review_list' %}" class="btn btn-primary">Back to Review List</a><br>
+{% endblock %}

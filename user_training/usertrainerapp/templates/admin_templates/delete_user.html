@@ -1,0 +1,14 @@
+
+<html>
+<head>
+  <title>Delete User</title>
+</head>
+<body>
+  <h1>Delete User</h1>
+  <p>Are you sure you want to delete the user?</p>
+  <form method="delete" action="{% url 'user_delete' user.id %}">
+    {% csrf_token %}
+    <button type="submit">Delete</button>
+  </form>
+</body>
+</html>

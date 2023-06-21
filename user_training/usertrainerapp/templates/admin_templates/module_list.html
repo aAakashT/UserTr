@@ -16,7 +16,7 @@
   </style>
 </head>
 <body>
-  <h1>API Table</h1>
+  <h1>Training modules Table</h1>
   <table id="apiTable"></table>
 
   <script>
@@ -63,10 +63,10 @@
 
   </script>
   <script>
-    function visitPage(){
+    function visitPagecreate(){
       window.location.href = "{% url 'api_training_create' %}";
     }
-  </script><button class="btn btn-primary" onclick="visitPage();" >CreateModules</button></br>
+  </script><button class="btn btn-primary" onclick="visitPagecreate();" >CreateModules</button></br>
   {%if error%}
   {{error}}
   {%endif%}

@@ -1,2 +1,23 @@
 <p4>You already signed in </p4>
 <a href="{% url 'logout_api' %}">logout</a>
+<!-- dashboard.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Your head content -->
+</head>
+<body>
+    <!-- Your HTML content -->
+    
+    <div class="tab-container">
+        <ul class="tabs">
+            {% for tab in tabs %}
+                <li><a href="#">{{ tab }}</a></li>
+            {% endfor %}
+        </ul>
+        
+        <!-- Tab content goes here -->
+    </div>
+</body>
+</html>

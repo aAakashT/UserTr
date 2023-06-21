@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Update User</title>
+</head>
+<body>
+  <h1>Update User</h1>
+  <form method="put" action="{% url 'user_update' user.id %}">
+    {% csrf_token %}
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" value="{{ user.email }}">
+    <br>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" value="{{ user.username }}">
+    <br>
+    <label for="team_leader">Team Leader:</label>
+    <select id="team_leader" name="team_leader">
+      <option value="">-- None --</option>
+      {% for team_leader in team_leaders %}
+        <option value="{{ team_leader.id }}"
+          {% if user.team_leader_id == team_leader.id %}selected{% endif %}>
+          {{ team_leader.username }}
+        </option>
+      {% endfor %}
+    </select>
+    <br>
+    <button type="submit">Update</button>
+  </form>
+</body>
+</html>

@@ -22,7 +22,8 @@
             <th>Reviews</th>
             <th>Assign role</th>
             <th>Assign tl</th>
-
+            <th>Delete</th>
+            <th>Update</th>
           </tr>
         </thead>
         <tbody>
@@ -32,6 +33,33 @@
   </div>
 
   <div id="api-response"></div>
+
+  <!-- User Update Form -->
+  <div id="update-form" style="display: none;">
+    <h3>Update User</h3>
+    <form id="update-user-form">
+      <input type="hidden" id="user-id" value="">
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username">
+      </div>
+      <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email">
+      </div>
+      <div>
+        <label for="first-name">First Name:</label>
+        <input type="text" id="first-name" name="first_name">
+      </div>
+      <div>
+        <label for="last-name">Last Name:</label>
+        <input type="text" id="last-name" name="last_name">
+      </div>
+      <div>
+        <button type="submit">Update</button>
+      </div>
+    </form>
+  </div>
 
   <script>
     $(document).ready(function() {
@@ -90,6 +118,22 @@
           return link;
         }
       },
+      {
+    "data": "id",
+    "render": function(data, type, row, meta) {
+      var url = `/users/delete/${data}/`;
+      var link = `<a href="${url}" class="delete-user" data-userid="${data}">Delete</a>`;
+      return link;
+    }
+  },
+  {
+    "data": "id",
+    "render": function(data, type, row, meta) {
+      var url = `/users/update/${data}/`;
+      var link = `<a href="${url}" class="update-user" data-userid="${data}">Update</a>`;
+      return link;
+    }
+  }
           
         ]
       });
@@ -122,11 +166,128 @@
         console.log(error);
       }
     });
+    // Delete Record
+    $(document).on('click', '.delete-user', function(e) {
+  e.preventDefault();
+  var userId = $(this).data('userid');
+  var username = $(this).closest('tr').find('.username').text(); // Get the username from the table
+  var confirmation = confirm(`Are you sure you want to delete the user '${username}'?`);
   
+  if (confirmation) {
+    var url = `/users/delete/${userId}/`;
+
+    $.ajax({
+      url: url,
+      method: "DELETE",
+      success: function(response) {
+        alert('User deleted successfully');
+        // Refresh the table
+        assetTable.ajax.reload();
+      },
+      error: function(xhr, status, error) {
+        console.log(error);
+      }
+    });
+  }
+});
+  $(document).on('click', '.update-user', function(e) {
+        e.preventDefault();
+        var userId = $(this).data('userid');
+        var url = `/users/update/${userId}/`;
+
+        // Show the update form
+        $('#update-form').show();
+
+        // Populate the form fields with existing data
+        var rowData = assetTable.row($(this).closest('tr')).data();
+        $('#user-id').val(rowData.id);
+        $('#username').val(rowData.username);
+        $('#email').val(rowData.email);
+        $('#first-name').val(rowData.first_name);
+        $('#last-name').val(rowData.last_name);
+
+        // Submit the form
+        $('#update-user-form').on('submit', function(e) {
+          e.preventDefault();
+
+          var updatedData = {
+            'username': $('#username').val(),
+            'email': $('#email').val(),
+            'first_name': $('#first-name').val(),
+            'last_name': $('#last-name').val()
+          };
+
+          $.ajax({
+            url: url,
+            method: "PUT",
+            data: updatedData,
+            success: function(response) {
+              alert('User updated successfully');
+              // Hide the update form
+              $('#update-form').hide();
+              // Refresh the table
+              assetTable.ajax.reload();
+            },
+            error: function(xhr, status, error) {
+              console.log(error);
+            }
+          });
+        });
+
+        $(document).ready(function() {
+    // Define a function to handle the API request and response
+    function handleAPICall(url, method, data) {
+        $.ajax({
+            url: url,
+            method: method,
+            data: data,
+            success: function(response) {
+                // Process the successful API response
+                console.log(response);
+                
+                // Update the page content with the response data
+                // Example: Display the response in a specific HTML element
+                $('#responseElement').text(response);
+            },
+            error: function(xhr, status, error) {
+                // Process the error response
+                console.error(xhr.responseText);
+            }
+        });
+    }
+    
+    // Example usage: Make an API request when a button is clicked
+    $('#myButton').click(function() {
+        var url = '/api/training/create/';
+        var method = 'POST';
+        var data = {
+            // Add any required request data
+            // Example: 'name': 'Training Name'
+        };
+        
+        handleAPICall(url, method, data);
+    });
+});
+  
+    });
     });
     });
     });
   </script>
-  
+ <script>
+  function visitPagemodules(){
+    window.location.href = '/training/modules/';
+  }
+</script><button class="btn btn-primary" onclick="visitPagemodules();" >View Training Modules</button></br>
+<script>
+  function visitPagecreate(){
+    window.location.href = '/api/training/create/';
+  }
+</script><button class="btn btn-primary" onclick="visitPagecreate();" >CreateTraining</button></br> <br>
+<script>
+  function visitPagelogout(){
+    window.location.href = '/api/logout/';
+  }
+</script><button class="btn btn-primary" onclick="visitPagelogout();" >LogOut</button></br> 
 </body>
 </html>
