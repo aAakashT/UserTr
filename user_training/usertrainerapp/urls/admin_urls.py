@@ -30,8 +30,8 @@ urlpatterns = [
     path('api/assign/role/<int:user_id>/', AssignRoleView.as_view(), name='api_assign_role'),
     path('users/delete/<int:user_id>/', UserDeleteView.as_view(), name='user_delete'),
     path('users/update/<int:user_id>/', UserUpdateView.as_view(), name='user_update'),
-    path('training/update/<int:module_id>/', TrainingUpdateView.as_view(), name='training_update'),
-    path('training/delete/<int:module_id>/', TrainingDeleteView.as_view(), name='training_delete'),
+    path('training/update/<int:module_id>/', TrainingUpdateView.as_view(), name='api_training_update'),
+    path('training/delete/<int:module_id>/', TrainingDeleteView.as_view(), name='api_training_delete'),
     path('ad/dashboard/', admin_dashboard_view , name = 'admin_dashboard'),
     
     

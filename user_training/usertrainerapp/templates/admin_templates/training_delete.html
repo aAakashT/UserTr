@@ -5,7 +5,7 @@
   {% block content %}
   <h1>Delete Training Module</h1>
   <p>Are you sure you want to delete the training module?</p>
-  <form method="put" action="{% url 'training_delete' module.id %}">
+  <form method="post" action="{% url 'api_training_delete' module.id %}">
     {% csrf_token %}
     <button type="submit">Delete</button>
   </form>

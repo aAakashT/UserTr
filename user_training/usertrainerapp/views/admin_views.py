@@ -59,7 +59,7 @@ class TrainingListView(APIView):
     #     return Response(content)
 
 def show_training_modules(request):
-    return render(request, 'admin_templates/module_list.html')
+    return render(request, 'admin_templates/module_list_1.html')
 
 class AssignTLView(APIView):
     permission_classes = [IsAdmin]
@@ -193,13 +193,13 @@ class TrainingUpdateView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     template_name = 'admin_templates/training_update.html'
     
-    def get(self, request, user_id):
+    def get(self, request, module_id):
         try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
+            training_module = TrainingModule.objects.get(id=module_id)
+        except TrainingModule.DoesNotExist:
             return Response({'error': 'User not found.'}, status=404)
-
-        context = {'user': user}
+        serializer = TrainingmoduleSerializer(training_module)
+        context = {'module': training_module, 'serializer':serializer}
         return Response(context)
 
     def post(self, request, module_id):
@@ -210,7 +210,7 @@ class TrainingUpdateView(APIView):
         serializer = TrainingmoduleSerializer(training_module, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return redirect('training_modules')
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class TrainingDeleteView(APIView):
@@ -218,14 +218,15 @@ class TrainingDeleteView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     template_name = 'admin_templates/training_delete.html'
 
-    def get(self, request, user_id):
+    def get(self, request, module_id):
         try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
+            training_module = TrainingModule.objects.get(id=module_id)
+        except TrainingModule.DoesNotExist:
             return Response({'error': 'User not found.'}, status=404)
-
-        context = {'user': user}
+        serializer = TrainingmoduleSerializer(training_module)
+        context = {'module': training_module, 'serializer':serializer}
         return Response(context)
+
 
     def post(self, request, module_id):
         try:
@@ -233,7 +234,7 @@ class TrainingDeleteView(APIView):
         except TrainingModule.DoesNotExist:
             return Response({'error': 'Training module does not exist.'}, status=status.HTTP_404_NOT_FOUND)
         training_module.delete()
-        return Response({'success': 'Training module deleted successfully.'})
+        return redirect('training_modules')
 
 
 def admin_dashboard_view(request):

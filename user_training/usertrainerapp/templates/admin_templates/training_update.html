@@ -1,10 +1,11 @@
 {% extends 'admin_templates/admin_dashboard.html' %}
 {% block head %}
   <title>Update Training Module</title>
-  {% endblock %}
-  {% block content %}
+{% endblock %}
+{% block content %}
   <h1>Update Training Module</h1>
-  <form method="post" action="{% url 'training_update' module.id %}">
+  <!-- {{ module.id }} -->
+  <form method="post" action="/training/update/{{ module.id }}/">
     {% csrf_token %}
     <label for="title">Title:</label>
     <input type="text" id="title" name="title" value="{{ module.title }}">
@@ -14,4 +15,4 @@
     <br>
     <button type="submit">Update</button>
   </form>
-  {% endblock %}
+{% endblock %}
