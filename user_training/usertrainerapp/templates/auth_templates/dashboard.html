@@ -5,24 +5,24 @@
 <head>
   <style>
 body {
-  background-color: #f8f8f8;
+  background-color: #c2fcfc;
   margin: 0;
 }
 
 .navbar {
-  background-color: #f2f2f2;
-  padding: 10px;
+  background-color: #80b7e4;
+  padding: 20px;
 }
 
 .navbar ul {
   list-style-type: none;
-  padding: 0;
+  padding: 1;
   margin: 0;
 }
 
 .navbar li {
   display: inline;
-  padding: 10px;
+  padding: 30px;
 }
 
 .navbar a {
@@ -53,25 +53,54 @@ td {
 th {
   background-color: #f2f2f2;
 }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: inline-block;
+            width: 150px;
+            vertical-align: top;
+        }
+        .form-group input {
+            display: inline-block;
+            width: 250px;
+        }
+    
 </style>
 {% block head %}
 {% endblock %}
 
 </head>
 <body>
+  <ul>
 
+  </ul>
+ 
+  <!-- <div class="sidenav">
+    <a href="/show/users/">Users</a>
+    <a href="/training/modules/">Modules</a>
+    <a href="#"></a>
+    <a href="#"></a> -->
+  </div>
   <div class="navbar">
     <ul>
-        <li><a href="#">User Registration</a></li>
-      </ul>
-    <!-- <ul>
-      <li><a href="#">About</a></li>
-      </ul>
-    <ul>
-      <li><a href="#">Contact</a></li>
-    </ul> -->
+        <li><p2><a href="#">User Training</a>
+        </p2></li>
+        <li><p2><a href="/user/reviews/"></a>
+        </p2></li>                </ul>
 </div>
-
-{% block content %}
-{% endblock %}
+<ul>
+    
+  </ul>
+  <ul>
+<!-- 
+    <li><p4> signed in as {{user}}</p4> </li> 
+    
+    <a href="{% url 'logout_api' %}">logout</a>
+  </ul> -->
+  {% block content %}
+  {% endblock %}
+</body>
+</html>
 

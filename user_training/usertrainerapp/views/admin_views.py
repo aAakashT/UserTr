@@ -9,7 +9,7 @@ from django.contrib.auth.models import Group
 from rest_framework.response import Response
 from django.db.models import Q
 from rest_framework.renderers import TemplateHTMLRenderer
-
+from django.contrib import messages
 class TrainingCreateView(APIView):
     permission_classes = [IsAdmin]
     renderer_classes = [TemplateHTMLRenderer]
@@ -118,11 +118,14 @@ class AssignRoleView(APIView):
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response({'error': 'User is required.'}, status=400)
-        tl_group, created = Group.objects.get_or_create(name='Team_Leader')
+        tl_group= Group.objects.get(name='Team_Leader')
+        # print(type(tl_group))
         if not tl_group:
             return Response({'error': 'Role is required.'}, status=400)
+        # user.groups.clear()
         if user.team_leader:
-            return Response({'error': 'Can not assign tl role to user otherthan user'}, status=400)
+            messages.error(request, 'Cannot assign the TL role to a user who is already a team leader.')
+            return redirect('show_users')
         user.groups.add(tl_group)
         return redirect('show_users')
 
