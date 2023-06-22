@@ -113,7 +113,7 @@ class WriteReview(APIView):
         review = Review.objects.create(user=user, team_leader=team_leader, comment=comment)
         serializer = ReviewSerializer(review)
 
-        return redirect(reverse_lazy(''))
+        return redirect('render_users')
         # return Response({'success': 'Review submitted', 'review': serializer.data})
 
 
@@ -151,15 +151,27 @@ class UpdateReview(APIView):
 
 class DeleteReview(APIView):
     permission_classes = [IsTeamLead]
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'tl_templates/delete_review.html'
+    
+    def get(self, request, review_id):
+        try:
+            review = Review.objects.get(id=review_id)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found.'}, status=404)
+        serializer = ReviewSerializer(review)    
 
-    def delete(self, request, review_id):
+        context = {'review': serializer.data}
+        return Response(context)
+
+    def post(self, request, review_id):
         try:
             review = Review.objects.get(id=review_id)
         except Review.DoesNotExist:
             return Response({'error': 'Review not found.'}, status=404)
 
         review.delete()
-        return redirect(reverse_lazy(f'render_users'))
+        return redirect(f'render_users')
         # return Response({'success': 'Review deleted'})
 
 class ViewReview(APIView):

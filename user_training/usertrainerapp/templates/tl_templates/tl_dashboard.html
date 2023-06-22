@@ -39,7 +39,7 @@ body {
 }
 
 table {
-  width: 100%;
+  width: 1000%;
   border-collapse: collapse;
 }
 
@@ -95,7 +95,7 @@ th {
   </ul>
   <ul>
 
-    <li><p4> signed in as {{user}}</p4> </li> 
+    <li><p4> signed in as {{user.email}}</p4> </li> 
     
     <a href="{% url 'logout_api' %}">logout</a>
   </ul>

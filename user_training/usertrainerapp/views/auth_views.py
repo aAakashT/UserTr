@@ -19,9 +19,12 @@ class UserRegistration(ModelViewSet):
         serializer = self.get_serializer(data = request.data)
         serializer.is_valid(raise_exception = True)
         group = Group.objects.get(name = 'User')
+
         self.perform_create(serializer)
         user = serializer.instance
         user.groups.add(group)
+        user.is_active = True
+        user.save()
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status = status.HTTP_201_CREATED, headers=headers)
 
@@ -34,16 +37,16 @@ class LoginApi(APIView):
         password = request.data.get('password')
         username = request.data.get('username')
         # print(password)
-        user = User.objects.get(email=email)
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         print(user)
 
-        # print(user)
-        # user = authenticate(request, username=username, password=password, email=email)
-        # print(user)
         if user:
             login(request, user)
             if request.user.is_authenticated:
-                print("yes")
+                print("login view")
                 groups = request.user.groups.all()
                 if groups.filter(name='Admin').exists():
                     return redirect('admin_dashboard')
@@ -65,12 +68,36 @@ class LoginApi(APIView):
             #     return redirect('user_dashboard') 
 
             session_key = request.session.session_key
-            request.session.set_expiry(500)
+            request.session.set_expiry(0)
             return redirect(('dashboard'))
 
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+# def handle_redirect(request):
+#     if request.user.is_authenticated:
+#         print("yes")
+#         groups = request.user.groups.all()
+#         if groups.filter(name='Admin').exists():
+#             return redirect('admin_dashboard')
+#         elif groups.filter(name='Team_Leader').exists():
+#             return redirect('tl_dashboard')
+#         elif groups.filter(name='User').exists():
+#             return redirect('user_dashboard')
+#     else:
+#         return redirect('dashboard')
+
+def login_view(request):
+    if request.user.is_authenticated:
+        # print("yes")
+        groups = request.user.groups.all()
+        if groups.filter(name='Admin').exists():
+            return redirect('admin_dashboard')
+        elif groups.filter(name='Team_Leader').exists():
+            return redirect('tl_dashboard')
+        elif groups.filter(name='User').exists():
+            return redirect('user_dashboard')
+    return render(request, 'auth_templates/login.html')
 
 class LogoutApi(APIView):
     template_name = 'auth_templates/logout.html'
@@ -83,10 +110,6 @@ class LogoutApi(APIView):
         return redirect(reverse_lazy('login'))
 
 
-def login_view(request):
-    if request.user.is_authenticated:
-        return redirect(reverse_lazy('dashboard'))
-    return render(request, 'auth_templates/login.html')
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -96,16 +119,3 @@ def register_view(request):
 
 def dashboard_view(request):
     return render(request, 'dashboard.html')
-
-def handle_redirect(request):
-    if request.user.is_authenticated:
-        print("yes")
-        groups = request.user.groups.all()
-        if groups.filter(name='Admin').exists():
-            return redirect('admin_dashboard')
-        elif groups.filter(name='Team_Leader').exists():
-            return redirect('tl_dashboard')
-        elif groups.filter(name='User').exists():
-            return redirect('user_dashboard')
-    else:
-        return redirect('dashboard')

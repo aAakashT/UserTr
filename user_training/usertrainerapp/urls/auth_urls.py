@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from usertrainerapp.views.auth_views import handle_redirect, UserRegistration, dashboard_view, LoginApi, LogoutApi, login_view, register_view
+from usertrainerapp.views.auth_views import  UserRegistration, dashboard_view, LoginApi, LogoutApi, login_view, register_view
 
 from rest_framework.routers import DefaultRouter
 
@@ -34,6 +34,6 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('register/user/', register_view, name='register_user'),
     path('dashboard/', dashboard_view , name = 'dashboard'),
-    path('handle/redirect/', handle_redirect , name = 'handle_redirect'),
+    path('', login_view , name='login1'),
+    # path('handle/redirect/', handle_redirect , name = 'handle_redirect'),
 ]
-handle_redirect
