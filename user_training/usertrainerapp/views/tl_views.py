@@ -75,7 +75,7 @@ class AssignModules(APIView):
         subject = "Training Module Assignment"
         message = f"You have been assigned the training module: {training_module.title}. Log in to the User Training Application to access it."
         email_from = settings.EMAIL_HOST_USER
-        recipient_list = ['aakashthorve99@gmail.com', ]
+        recipient_list = ['aakashthorve99@gmail.com', user1.email]
         send_mail( subject, message, email_from, recipient_list )
         return Response({'success': 'Training module assigned'})
 
@@ -114,7 +114,7 @@ class WriteReview(APIView):
         serializer = ReviewSerializer(review)
 
         return redirect(reverse_lazy(''))
-        return Response({'success': 'Review submitted', 'review': serializer.data})
+        # return Response({'success': 'Review submitted', 'review': serializer.data})
 
 
 class UpdateReview(APIView):

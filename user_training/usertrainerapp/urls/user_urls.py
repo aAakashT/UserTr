@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from usertrainerapp.views.user_views import render_modules, render_reviews, show_modules, show_reviews
+from usertrainerapp.views.user_views import render_modules, user_dashboard_view, render_reviews, show_modules, show_reviews
 from rest_framework.routers import DefaultRouter
 
 urlpatterns = [
@@ -24,4 +24,6 @@ urlpatterns = [
     path('api/user/reviews/', render_reviews, name='api_user_reviews'),
     path('user/modules/', show_modules, name='show_modules'),
     path('user/reviews/', show_reviews, name='show_reviews'),
+    path('user/dashboard/', user_dashboard_view, name='user_dashboard'),
+
 ]

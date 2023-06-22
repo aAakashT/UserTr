@@ -18,12 +18,12 @@
                         password: password
                     },
                     success: function(response) {
-                        if (response) {
-                            $('#login-message').text('Login successful. Redirecting...');
-                            window.location.href = '/handle/redirect/';
-                        } else {
-                            $('#login-message').text('Login failed. Please try again.');
-                        }
+                    //     if (response) {
+                    //         $('#login-message').text('Login successful. Redirecting...');
+                    //         // window.location.href = '/handle/redirect/';
+                    //     } else {
+                    //         $('#login-message').text('Login failed. Please try again.');
+                    //     }
                     },
                     error: function(xhr, status, error) {
                         $('#login-message').text('Login failed. Please try again.');

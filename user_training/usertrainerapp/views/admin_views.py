@@ -77,8 +77,7 @@ class AssignTLView(APIView):
         return Response(context)
 
     def post(self, request, user_id):
-        if tl_id == user_id:
-            return Response({'error': 'can not assign Tl to self'})
+        
         try:
             user = User.objects.get(id=user_id)
         except:
@@ -122,10 +121,10 @@ class AssignRoleView(APIView):
         # print(type(tl_group))
         if not tl_group:
             return Response({'error': 'Role is required.'}, status=400)
-        # user.groups.clear()
         if user.team_leader:
             messages.error(request, 'Cannot assign the TL role to a user who is already a team leader.')
             return redirect('show_users')
+        user.groups.clear()
         user.groups.add(tl_group)
         return redirect('show_users')
 

@@ -31,3 +31,6 @@ def show_modules(request):
 
 def show_reviews(request):
     return render(request, 'user_templates/reviews_list.html')
+
+def user_dashboard_view(request):
+    return render(request, 'user_templates/user_dashboard.html')

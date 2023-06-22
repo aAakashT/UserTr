@@ -65,8 +65,8 @@ class LoginApi(APIView):
             #     return redirect('user_dashboard') 
 
             session_key = request.session.session_key
-            request.session.set_expiry(0)
-            return redirect(reverse_lazy('dashboard'))
+            request.session.set_expiry(500)
+            return redirect(('dashboard'))
 
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -90,7 +90,7 @@ def login_view(request):
 
 def register_view(request):
     if request.user.is_authenticated:
-        return redirect(reverse_lazy('dashbord'))
+        return redirect(reverse_lazy('dashboard'))
     return render(request, 'auth_templates/register.html')
 
 
@@ -107,5 +107,5 @@ def handle_redirect(request):
             return redirect('tl_dashboard')
         elif groups.filter(name='User').exists():
             return redirect('user_dashboard')
-        else:
-            redirect('dashboard')
+    else:
+        return redirect('dashboard')
