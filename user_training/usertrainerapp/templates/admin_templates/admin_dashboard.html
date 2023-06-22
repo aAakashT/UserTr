@@ -100,6 +100,9 @@ td {
     
     <a href="{% url 'logout_api' %}">logout</a>
   </ul>
+  {% include 'messages.html' %}
+<br>
+<br>
   {% block content %}
   {% endblock %}
 </body>

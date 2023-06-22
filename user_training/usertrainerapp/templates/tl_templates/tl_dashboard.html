@@ -99,6 +99,10 @@ th {
     
     <a href="{% url 'logout_api' %}">logout</a>
   </ul>
+  <br>
+  <br>
+  {% include 'messages.html' %}
+
   {% block content %}
   {% endblock %}
 </body>

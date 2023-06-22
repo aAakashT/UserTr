@@ -10,6 +10,8 @@ from rest_framework.response import Response
 from django.db.models import Q
 from rest_framework.renderers import TemplateHTMLRenderer
 from django.contrib import messages
+
+
 class TrainingCreateView(APIView):
     permission_classes = [IsAdmin]
     renderer_classes = [TemplateHTMLRenderer]
@@ -19,6 +21,7 @@ class TrainingCreateView(APIView):
         try:
             Training = TrainingModule.objects.get(id=1)
         except TrainingModule.DoesNotExist:
+            messages.error(request, 'User not found.')
             return Response({'error': 'User not found.'}, status=404)
         return Response({'Training': Training})
 
@@ -26,7 +29,13 @@ class TrainingCreateView(APIView):
         serializer = TrainingmoduleSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            messages.success(request, 'Training Created Sucessfully.')
+            return redirect('training_modules')
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        messages.error(request, 'Invalid data')
+        return redirect('training_modules')
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserListView(APIView):
@@ -81,6 +90,8 @@ class AssignTLView(APIView):
         try:
             user = User.objects.get(id=user_id)
         except:
+            messages.error(request, 'TL ID is required.')
+
             return Response({'error': 'TL ID is required.'}, status=400)
         # tl_group, created = Group.objects.get_or_create(name='Team_Leader')
         # if user.groups == 2 or user.groups == 1:
@@ -88,15 +99,21 @@ class AssignTLView(APIView):
 
         tl_id = request.data.get('tl_id')
         print(tl_id)
-        print()
+        # print()
         if not tl_id:
+            messages.error(request, 'TL ID is required.')
+            
             return Response({'error': 'TL ID is required.'}, status=400)
         try:
             tl = User.objects.get(id=tl_id)
         except User.DoesNotExist:
+            messages.error(request, 'TL ID is required.')
+
             return redirect('user_list')  
         user.team_leader = tl
         user.save()
+        messages.success(request, f'{tl.username} is sucessfully assigned as TL of {user.username}')
+
         return redirect('show_users')
 
 
@@ -126,6 +143,8 @@ class AssignRoleView(APIView):
             return redirect('show_users')
         user.groups.clear()
         user.groups.add(tl_group)
+        messages.success(request, f'{user.username} is sucessfully assigned role')
+
         return redirect('show_users')
 
 class UserDeleteView(APIView):
@@ -149,6 +168,8 @@ class UserDeleteView(APIView):
             return Response({'error': 'User does not exist.'}, status=status.HTTP_404_NOT_FOUND)
         user.is_active = False
         user.save()
+        messages.success(request, f'{user.username} is sucessfully deleted')
+
         return redirect('show_users')
 
 class UserUpdateView(APIView):
@@ -188,6 +209,8 @@ class UserUpdateView(APIView):
                 return Response({'error': 'User does not exist.'}, status=status.HTTP_404_NOT_FOUND)
             user.team_leader = team_leader
         user.save()
+        messages.success(request, f'{user.username} is sucessfully updated')
+
         return redirect('show_users')
             
 class TrainingUpdateView(APIView):
@@ -212,7 +235,12 @@ class TrainingUpdateView(APIView):
         serializer = TrainingmoduleSerializer(training_module, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            messages.success(request, f'{training_module.title} is sucessfully updated')
+
             return redirect('training_modules')
+        messages.error(request, 'invalid data')
+        return redirect('training_modules')
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class TrainingDeleteView(APIView):
@@ -236,6 +264,8 @@ class TrainingDeleteView(APIView):
         except TrainingModule.DoesNotExist:
             return Response({'error': 'Training module does not exist.'}, status=status.HTTP_404_NOT_FOUND)
         training_module.delete()
+        messages.success(request, f'{training_module.title} is sucessfully deleted')
+
         return redirect('training_modules')
 
 

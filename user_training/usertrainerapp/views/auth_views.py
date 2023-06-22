@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from usertrainerapp.serializers import UserSerializer, RegisterSerializer
-from rest_framework import status
+from rest_framework import status, response
 from rest_framework.response import Response 
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group
@@ -11,6 +11,9 @@ from rest_framework.renderers import TemplateHTMLRenderer
 from django.urls import reverse_lazy
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+import json
+from django.contrib import messages
+
 class UserRegistration(ModelViewSet):
     serializer_class = RegisterSerializer
     queryset = User.objects.all
@@ -26,6 +29,7 @@ class UserRegistration(ModelViewSet):
         user.is_active = True
         user.save()
         headers = self.get_success_headers(serializer.data)
+        messages.success(request, 'User created sucessfully')
         return Response(serializer.data, status = status.HTTP_201_CREATED, headers=headers)
 
 class LoginApi(APIView):
@@ -40,6 +44,9 @@ class LoginApi(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
+            # data = json.dumps({'error': 'Invalid credentials'})
+            # return respo
+            messages.error(request, 'Invalid credentials')
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         print(user)
 
@@ -70,7 +77,7 @@ class LoginApi(APIView):
             session_key = request.session.session_key
             request.session.set_expiry(0)
             return redirect(('dashboard'))
-
+        messages.error(request, 'Invalid credentials')
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -90,6 +97,7 @@ class LoginApi(APIView):
 def login_view(request):
     if request.user.is_authenticated:
         # print("yes")
+        messages.success(request, 'Already loggedin')
         groups = request.user.groups.all()
         if groups.filter(name='Admin').exists():
             return redirect('admin_dashboard')
@@ -107,7 +115,8 @@ class LogoutApi(APIView):
 
     def post(self, request):
         logout(request)
-        return redirect(reverse_lazy('login'))
+        messages.success(request, 'logged out sucessfully')
+        return redirect('login')
 
 
 

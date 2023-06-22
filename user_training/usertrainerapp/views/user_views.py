@@ -5,6 +5,7 @@ from usertrainerapp.models import TrainingModule, Review
 from usertrainerapp.permissions import IsUser
 from rest_framework.response import Response
 from rest_framework import status
+from django.contrib import messages
 
 @api_view(['GET',])
 @permission_classes([IsUser,])

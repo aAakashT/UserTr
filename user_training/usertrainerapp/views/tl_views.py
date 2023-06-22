@@ -10,7 +10,9 @@ from rest_framework.response import Response
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse_lazy
+from django.contrib import messages
 import json
+
 @api_view(['GET'])
 @permission_classes([IsTeamLead])
 def api_get_users(request):
@@ -77,6 +79,8 @@ class AssignModules(APIView):
         email_from = settings.EMAIL_HOST_USER
         recipient_list = ['aakashthorve99@gmail.com', user1.email]
         send_mail( subject, message, email_from, recipient_list )
+        messages.success(request, f'{training_module.title} assigned sucessfully.')
+
         return Response({'success': 'Training module assigned'})
 
 def assign_modules_UI(request):
@@ -112,6 +116,7 @@ class WriteReview(APIView):
 
         review = Review.objects.create(user=user, team_leader=team_leader, comment=comment)
         serializer = ReviewSerializer(review)
+        messages.success(request, f'review created sucessfully.')
 
         return redirect('render_users')
         # return Response({'success': 'Review submitted', 'review': serializer.data})
@@ -143,6 +148,7 @@ class UpdateReview(APIView):
 
         review.comment = comment
         review.save()
+        messages.success(request, f'Review updated sucessfully.')
 
         serializer = ReviewSerializer(review)
         return redirect(reverse_lazy(f'render_users'))
@@ -153,7 +159,7 @@ class DeleteReview(APIView):
     permission_classes = [IsTeamLead]
     renderer_classes = [TemplateHTMLRenderer]
     template_name = 'tl_templates/delete_review.html'
-    
+
     def get(self, request, review_id):
         try:
             review = Review.objects.get(id=review_id)
@@ -171,6 +177,8 @@ class DeleteReview(APIView):
             return Response({'error': 'Review not found.'}, status=404)
 
         review.delete()
+        messages.success(request, f'Review deleted sucessfully.')
+
         return redirect(f'render_users')
         # return Response({'success': 'Review deleted'})
 
