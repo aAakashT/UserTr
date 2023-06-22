@@ -6,7 +6,7 @@ from django.db import models
 class User(AbstractUser):
     email = models.EmailField(unique=True, )
     groups = models.ManyToManyField(Group, blank=True, related_name = 'users', default='User')
-    team_leader = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='team_members')
+    team_leader = models.ForeignKey('self', on_delete=models.DO_NOTHING, null=True, blank=True, related_name='team_members')
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
     
@@ -18,7 +18,7 @@ class TrainingModule(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
     user = models.ManyToManyField(User, blank = True, related_name='modules')
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='training_modules')
+    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, related_name='training_modules')
     assigned_date = models.DateField(auto_now_add=True, null=True, blank=True)
  
     def __str__(self):

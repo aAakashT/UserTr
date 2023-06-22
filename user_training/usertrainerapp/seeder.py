@@ -2,12 +2,14 @@ import os
 import sys
 import django
 from django.db.models import Q
-sys.path.append(r'/home/neosoft/user_training/user_training')
+# /home/neosoft/Downloads/UserTrainingR-main/user_training/user_training/settings.py
+sys.path.append(r'/home/neosoft/Downloads/UserTrainingR-main/user_training')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'user_training.settings')
 django.setup()
 from django.contrib.auth.models import Group   # always import Group after setting module
 def seed_roles():
     """create roles and then check if they are exists or not"""
+    print(Group.objects.all())
     admin_role = 'Admin'
     team_leader_role = 'Team_Leader'
     user_role = 'User'
