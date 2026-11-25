@@ -1,1 +1,9 @@
 .env
+.gradle/
+.idea/
+local.properties
+build/
+**/build/
+*.apk
+*.aab
+*.iml

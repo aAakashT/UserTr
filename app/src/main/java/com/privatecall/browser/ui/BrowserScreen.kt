@@ -1,0 +1,352 @@
+package com.privatecall.browser.ui
+
+import android.annotation.SuppressLint
+import android.webkit.CookieManager
+import android.webkit.PermissionRequest
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Tab
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Checkbox
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.privatecall.browser.browser.BrowserViewModel
+import com.privatecall.browser.MainActivity
+import com.privatecall.browser.security.UrlValidator
+import com.privatecall.browser.security.DownloadValidator
+import com.privatecall.browser.privacy.PrivacyPreferences
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
+    val tabs by viewModel.tabs.tabs.collectAsState()
+    val activeId by viewModel.tabs.activeTabId.collectAsState()
+    val activeTab = tabs.firstOrNull { it.id == activeId }
+    val address by viewModel.address.collectAsState()
+    val secure by viewModel.secure.collectAsState()
+    val httpWarning by viewModel.httpWarning.collectAsState()
+    var showTabs by remember { mutableStateOf(false) }
+    val webViewState = remember(activeId) { mutableStateOf<WebView?>(null) }
+    val context = LocalContext.current
+    var pendingPermissionRequest by remember { mutableStateOf<PermissionRequest?>(null) }
+    var pendingPermissionOrigin by remember { mutableStateOf<String?>(null) }
+    var rememberPermission by remember { mutableStateOf(false) }
+    var pendingDownloadUrl by remember { mutableStateOf<String?>(null) }
+    var pendingDownloadName by remember { mutableStateOf("") }
+
+    pendingDownloadUrl?.let { downloadUrl ->
+        val executable = DownloadValidator.isExecutable(pendingDownloadName)
+        AlertDialog(
+            onDismissRequest = { pendingDownloadUrl = null },
+            title = { Text("Download file?") },
+            text = {
+                Column {
+                    Text(pendingDownloadName.ifBlank { "Unnamed download" })
+                    if (executable) {
+                        Text(
+                            "Warning: executable or APK downloads can run code. Install only if you trust the source.",
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (context is MainActivity) {
+                        context.startUserApprovedDownload(downloadUrl, pendingDownloadName)
+                    }
+                    pendingDownloadUrl = null
+                }) { Text("Choose destination") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDownloadUrl = null }) { Text("Cancel") }
+            },
+        )
+    }
+
+    pendingPermissionRequest?.let { request ->
+        val origin = pendingPermissionOrigin
+        AlertDialog(
+            onDismissRequest = {
+                request.deny()
+                pendingPermissionRequest = null
+            },
+            title = { Text("Allow site access?") },
+            text = {
+                Column {
+                    Text("Requested origin:")
+                    Text(origin ?: "Untrusted origin")
+                    Text("Requested: ${request.resources.joinToString { resource ->
+                        when (resource) {
+                            PermissionRequest.RESOURCE_AUDIO_CAPTURE -> "microphone"
+                            PermissionRequest.RESOURCE_VIDEO_CAPTURE -> "camera"
+                            else -> "unsupported resource"
+                        }
+                    }}")
+                    Row(modifier = Modifier.padding(top = 8.dp)) {
+                        Checkbox(
+                            checked = rememberPermission,
+                            onCheckedChange = { rememberPermission = it },
+                        )
+                        Text(
+                            text = "Remember for this origin",
+                            modifier = Modifier.padding(start = 8.dp, top = 12.dp),
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (origin != null && context is MainActivity) {
+                        context.requestMediaPermissions(request, origin, rememberPermission)
+                    } else {
+                        request.deny()
+                    }
+                    pendingPermissionRequest = null
+                    rememberPermission = false
+                }) { Text("Allow") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    request.deny()
+                    pendingPermissionRequest = null
+                    rememberPermission = false
+                }) { Text("Deny") }
+            },
+        )
+    }
+
+    if (privateSession) {
+        if (activeTab?.private != true) viewModel.tabs.setPrivateSessionEnabled(true)
+    } else if (activeTab?.private == true) {
+        viewModel.tabs.setPrivateSessionEnabled(false)
+    }
+
+    if (showTabs) {
+        AlertDialog(
+            onDismissRequest = { showTabs = false },
+            title = { Text("${tabs.size} tabs") },
+            text = {
+                Column {
+                    tabs.forEach { tab ->
+                        TextButton(onClick = {
+                            viewModel.tabs.selectTab(tab.id)
+                            showTabs = false
+                        }) {
+                            Text(if (tab.title.isBlank()) tab.url else tab.title)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.tabs.openTab(privateSession)
+                    showTabs = false
+                }) { Text("New tab") }
+            },
+        )
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+        ) {
+            IconButton(onClick = { webViewState.value?.goBack() }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+            IconButton(onClick = { webViewState.value?.goForward() }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Forward")
+            }
+            OutlinedTextField(
+                value = address,
+                onValueChange = viewModel::setAddress,
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                label = { Text(if (secure) "Secure address" else "Address or search") },
+                leadingIcon = {
+                    Icon(
+                        if (secure) Icons.Default.Lock else Icons.Default.LockOpen,
+                        contentDescription = if (secure) "HTTPS" else "Connection",
+                    )
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
+                keyboardActions = KeyboardActions(onGo = { viewModel.navigate(address) }),
+            )
+            IconButton(onClick = { webViewState.value?.reload() }) {
+                Icon(Icons.Default.Refresh, contentDescription = "Reload")
+            }
+            IconButton(onClick = { webViewState.value?.stopLoading() }) {
+                Icon(Icons.Default.Stop, contentDescription = "Stop")
+            }
+        }
+
+        if (httpWarning) {
+            Text(
+                text = "Warning: this page uses unencrypted HTTP",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                color = androidx.compose.ui.graphics.Color(0xFFFFB300),
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+        ) {
+            IconButton(onClick = { viewModel.tabs.openTab(privateSession) }) {
+                Icon(Icons.Default.Add, contentDescription = "New tab")
+            }
+            IconButton(onClick = { showTabs = true }) {
+                Icon(Icons.Default.Tab, contentDescription = "Tab switcher")
+            }
+            IconButton(onClick = { viewModel.tabs.closeActive() }) {
+                Icon(Icons.Default.Close, contentDescription = "Close active tab")
+            }
+            TextButton(onClick = { viewModel.tabs.closeActive() }) {
+                Text("Stop microphone use")
+            }
+        }
+
+        if (activeTab?.loading == true) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+
+        AndroidView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            factory = { viewContext ->
+                WebView(viewContext).apply {
+                    webViewState.value = this
+                    val privacyPreferences = PrivacyPreferences(viewContext)
+                    settings.javaScriptEnabled = privacyPreferences.javascriptEnabled
+                    settings.domStorageEnabled = activeTab?.private != true
+                    settings.databaseEnabled = activeTab?.private != true
+                    settings.allowFileAccess = false
+                    settings.allowContentAccess = false
+                    settings.allowFileAccessFromFileURLs = false
+                    settings.allowUniversalAccessFromFileURLs = false
+                    settings.mediaPlaybackRequiresUserGesture = false
+                    if (activeTab?.private == true) {
+                        settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
+                    } else {
+                        settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+                    }
+                    setDownloadListener { url, _, contentDisposition, mimeType, _ ->
+                        val userName = android.webkit.URLUtil.guessFileName(
+                            url,
+                            contentDisposition,
+                            mimeType,
+                        )
+                        if (DownloadValidator.isAllowedUrl(url)) {
+                            pendingDownloadUrl = url
+                            pendingDownloadName = userName
+                        }
+                    }
+                    isVerticalScrollBarEnabled = true
+                    isHorizontalScrollBarEnabled = false
+                    webChromeClient = object : WebChromeClient() {
+                        override fun onPermissionRequest(request: PermissionRequest) {
+                            val origin = request.origin?.toString()?.let(UrlValidator::origin)
+                            val supported = request.resources.all {
+                                it == PermissionRequest.RESOURCE_AUDIO_CAPTURE ||
+                                    it == PermissionRequest.RESOURCE_VIDEO_CAPTURE
+                            }
+                            if (origin == null || !origin.startsWith("https://") || !supported) {
+                                request.deny()
+                                return
+                            }
+                            val repository =
+                                (context as? MainActivity)?.sitePermissionRepository()
+                            val alreadyGranted = request.resources.all {
+                                repository?.isGranted(origin, it) == true
+                            }
+                            if (alreadyGranted && context is MainActivity) {
+                                context.requestMediaPermissions(request, origin, false)
+                            } else {
+                                pendingPermissionOrigin = origin
+                                pendingPermissionRequest = request
+                            }
+                        }
+
+                        override fun onPermissionRequestCanceled(
+                            request: PermissionRequest,
+                        ) {
+                            if (pendingPermissionRequest === request) {
+                                pendingPermissionRequest = null
+                                pendingPermissionOrigin = null
+                            }
+                        }
+
+                        override fun onGeolocationPermissionsShowPrompt(
+                            origin: String?,
+                            callback: android.webkit.GeolocationPermissions.Callback?,
+                        ) {
+                            callback?.invoke(origin, false, false)
+                        }
+                    }
+                    val isPrivate = activeTab?.private == true
+                    if (isPrivate) {
+                        CookieManager.getInstance().setAcceptCookie(false)
+                        settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
+                    } else {
+                        CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
+                    }
+                    webViewClient = object : WebViewClient() {
+                        override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                            url?.let(viewModel::pageStarted)
+                        }
+
+                        override fun onPageFinished(view: WebView?, url: String?) {
+                            viewModel.pageFinished(view?.title, url)
+                            viewModel.updateHistoryState(view?.canGoBack() == true, view?.canGoForward() == true)
+                        }
+                    }
+                    loadUrl(activeTab?.url ?: "https://www.example.com")
+                }
+            },
+            update = { webView ->
+                val desiredUrl = activeTab?.url ?: "https://www.example.com"
+                if (webView.url != desiredUrl && desiredUrl != "about:blank") {
+                    webView.loadUrl(desiredUrl)
+                }
+            },
+        )
+    }
+}

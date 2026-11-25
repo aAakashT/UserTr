@@ -1,0 +1,135 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build PrivateCall Browser Debug APK",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Inspect Android SDK",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"echo \"ANDROID_HOME=$ANDROID_HOME\"; echo \"ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT\"; ls -la /opt 2>/dev/null; ls -la /tmp/android-sdk 2>/dev/null"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Inspect Android SDK Packages",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"find /tmp/android-sdk/build-tools -maxdepth 1 -mindepth 1 -type d -printf '%f\\n'; find /tmp/android-sdk/platforms -maxdepth 1 -mindepth 1 -type d -printf '%f\\n'; find /tmp/android-sdk/cmdline-tools -maxdepth 2 -type f -name sdkmanager -printf '%p\\n'"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Diagnose Android Build",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug",
+				"--stacktrace"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Inspect Java Installations",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"java -version 2>&1; ls -la /usr/lib/jvm 2>/dev/null"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Find JDK 17",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"find / -maxdepth 4 -type f -name java 2>/dev/null | sort | head -30"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Find Java Paths",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"which -a java; readlink -f \"$(which java)\""
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Install JDK 17",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"source /usr/local/sdkman/bin/sdkman-init.sh && sdk install java 17.0.16-ms"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Check Phase 1 Changes",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"--no-pager",
+				"status",
+				"--short"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Run PrivateCall Unit Tests",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"testDebugUnitTest"
+			],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Run Complete Unit Tests",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"testDebugUnitTest"
+			],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Build Updated Debug APK",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug",
+				"testDebugUnitTest"
+			],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}
