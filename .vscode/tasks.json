@@ -188,6 +188,117 @@
 			],
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Build debug APK",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Run unit tests",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"testDebugUnitTest"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Build voice effects APK",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug",
+				"--stacktrace"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Inspect Java and Android SDK",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"printf 'JAVA_HOME=%s\\njava=' \"$JAVA_HOME\"; java -version 2>&1 || true; printf 'SDK=%s\\nANDROID_HOME=%s\\nANDROID_SDK_ROOT=%s\\n' \"$SDK\" \"$ANDROID_HOME\" \"$ANDROID_SDK_ROOT\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "List Java installations",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"ls -1 /usr/local/sdkman/candidates/java 2>/dev/null || true; ls -1 /usr/lib/jvm 2>/dev/null || true"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build APK with JDK 21",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"export JAVA_HOME=/usr/local/sdkman/candidates/java/21.0.13.0+2-ms; export PATH=\"$JAVA_HOME/bin:$PATH\"; ./gradlew assembleDebug"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Find Android SDK",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"for p in \"$ANDROID_HOME\" \"$ANDROID_SDK_ROOT\" /opt/android-sdk /opt/android-sdk-linux /home/codespace/.android/sdk /home/codespace/Android/Sdk /usr/lib/android-sdk /usr/local/android-sdk; do [ -n \"$p\" ] && [ -d \"$p\" ] && echo \"$p\"; done; find /home/codespace /opt /usr/local -maxdepth 4 -type d -name 'platforms' 2>/dev/null | head -20"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Android tooling",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"command -v sdkmanager || true; command -v avdmanager || true; ls -la /usr/lib/android-sdk 2>/dev/null || true; ls -la /opt/android-sdk 2>/dev/null || true"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install Android SDK tooling",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"apt-get update && apt-get install -y android-sdk"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Download Android SDK",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"mkdir -p \"$PWD/.android-sdk/cmdline-tools\" && curl -L --fail --retry 3 -o /tmp/android-commandline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip && unzip -q -o /tmp/android-commandline-tools.zip -d \"$PWD/.android-sdk/cmdline-tools\" && mv \"$PWD/.android-sdk/cmdline-tools/cmdline-tools\" \"$PWD/.android-sdk/cmdline-tools/latest\" && yes | \"$PWD/.android-sdk/cmdline-tools/latest/bin/sdkmanager\" --sdk_root=\"$PWD/.android-sdk\" \"platform-tools\" \"platforms;android-35\" \"build-tools;35.0.0\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }

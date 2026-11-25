@@ -33,4 +33,42 @@ class PrivacyPreferences(context: Context) {
     var voiceModulationPreset: String
         get() = preferences.getString("voice_modulation", "Off") ?: "Off"
         set(value) = preferences.edit().putString("voice_modulation", value).apply()
+
+    fun voicePresetName(presetId: String): String {
+        return preferences.getString("voice_name_$presetId", defaultVoicePresetName(presetId))
+            ?: defaultVoicePresetName(presetId)
+    }
+
+    fun setVoicePresetName(presetId: String, name: String) {
+        val cleanName = name.trim().take(40)
+        preferences.edit()
+            .putString("voice_name_$presetId", cleanName.ifBlank { defaultVoicePresetName(presetId) })
+            .apply()
+    }
+
+    companion object {
+        val voicePresetIds = listOf(
+            "male-bright", "female-bright",
+            "male-warm", "female-warm",
+            "male-deep", "female-deep",
+            "male-radio", "female-radio",
+            "male-cinematic", "female-cinematic",
+            "male-podcast", "female-podcast",
+            "male-bass", "female-bass",
+            "male-crisp", "female-crisp",
+            "male-telephone", "female-telephone",
+            "male-natural", "female-natural",
+        )
+
+        val voiceTypes = listOf(
+            "Bright", "Warm", "Deep", "Radio", "Cinematic",
+            "Podcast", "Bass", "Crisp", "Telephone", "Natural",
+        )
+
+        fun defaultVoicePresetName(presetId: String): String {
+            val gender = if (presetId.startsWith("male-")) "Male" else "Female"
+            val type = presetId.substringAfter('-', "").replaceFirstChar { it.uppercase() }
+            return "$gender $type"
+        }
+    }
 }

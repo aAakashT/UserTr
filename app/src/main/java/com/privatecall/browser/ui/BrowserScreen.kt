@@ -71,15 +71,11 @@ private fun stopMediaCapture(webView: WebView?) {
 }
 
 private fun voiceProcessingScript(preset: String): String {
-    val gain = when (preset) {
-        "Deep" -> "0.95"
-        "Bright" -> "1.12"
-        "Radio" -> "0.85"
-        else -> "1.0"
-    }
     return """
     (function () {
-      if (!navigator.mediaDevices || navigator.mediaDevices.__privateCallWrapped) return;
+      if (!navigator.mediaDevices) return;
+      window.__privateCallVoicePreset = "$preset";
+      if (navigator.mediaDevices.__privateCallWrapped) return;
       navigator.mediaDevices.__privateCallWrapped = true;
       var streams = [];
       window.__privateCallStopMedia = function () {
@@ -92,24 +88,53 @@ private fun voiceProcessingScript(preset: String): String {
       navigator.mediaDevices.getUserMedia = function (constraints) {
         return originalGetUserMedia(constraints).then(function (stream) {
           streams.push(stream);
-          var preset = "$preset";
+          var preset = window.__privateCallVoicePreset || "Off";
           if (!constraints || !constraints.audio || preset === "Off") return stream;
           try {
             var context = new (window.AudioContext || window.webkitAudioContext)();
             var source = context.createMediaStreamSource(stream);
             var gainNode = context.createGain();
-            gainNode.gain.value = $gain;
+          gainNode.gain.value =
+            preset.indexOf("deep") >= 0 ? 0.95 :
+            preset.indexOf("bright") >= 0 ? 1.12 :
+            preset.indexOf("radio") >= 0 ? 0.85 :
+            preset.indexOf("bass") >= 0 ? 1.08 :
+            preset.indexOf("telephone") >= 0 ? 0.80 :
+            1.0;
             var output = context.createMediaStreamDestination();
-            if (preset === "Deep") {
+          if (preset.indexOf("deep") >= 0) {
               var f = context.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1150;
               source.connect(f); f.connect(gainNode); gainNode.connect(output);
-            } else if (preset === "Bright") {
+          } else if (preset.indexOf("bright") >= 0) {
               var f2 = context.createBiquadFilter(); f2.type = "highpass"; f2.frequency.value = 180;
               source.connect(f2); f2.connect(gainNode); gainNode.connect(output);
-            } else if (preset === "Radio") {
+          } else if (preset.indexOf("radio") >= 0) {
               var low = context.createBiquadFilter(); low.type = "highpass"; low.frequency.value = 300;
               var high = context.createBiquadFilter(); high.type = "lowpass"; high.frequency.value = 3400;
               source.connect(low); low.connect(high); high.connect(gainNode); gainNode.connect(output);
+          } else if (preset.indexOf("warm") >= 0) {
+            var warm = context.createBiquadFilter(); warm.type = "lowpass"; warm.frequency.value = 2400;
+            var warmHigh = context.createBiquadFilter(); warmHigh.type = "highshelf"; warmHigh.frequency.value = 300; warmHigh.gain.value = -2;
+            source.connect(warm); warm.connect(warmHigh); warmHigh.connect(gainNode); gainNode.connect(output);
+          } else if (preset.indexOf("cinematic") >= 0) {
+            var cineLow = context.createBiquadFilter(); cineLow.type = "highpass"; cineLow.frequency.value = 80;
+            var cineHigh = context.createBiquadFilter(); cineHigh.type = "lowpass"; cineHigh.frequency.value = 7000;
+            source.connect(cineLow); cineLow.connect(cineHigh); cineHigh.connect(gainNode); gainNode.connect(output);
+          } else if (preset.indexOf("podcast") >= 0) {
+            var podLow = context.createBiquadFilter(); podLow.type = "highpass"; podLow.frequency.value = 100;
+            var podPresence = context.createBiquadFilter(); podPresence.type = "peaking"; podPresence.frequency.value = 2200; podPresence.Q.value = 1; podPresence.gain.value = 2;
+            source.connect(podLow); podLow.connect(podPresence); podPresence.connect(gainNode); gainNode.connect(output);
+          } else if (preset.indexOf("bass") >= 0) {
+            var bass = context.createBiquadFilter(); bass.type = "lowshelf"; bass.frequency.value = 180; bass.gain.value = 5;
+            var bassCut = context.createBiquadFilter(); bassCut.type = "lowpass"; bassCut.frequency.value = 5200;
+            source.connect(bass); bass.connect(bassCut); bassCut.connect(gainNode); gainNode.connect(output);
+          } else if (preset.indexOf("crisp") >= 0) {
+            var crisp = context.createBiquadFilter(); crisp.type = "peaking"; crisp.frequency.value = 3200; crisp.Q.value = 1.2; crisp.gain.value = 4;
+            source.connect(crisp); crisp.connect(gainNode); gainNode.connect(output);
+          } else if (preset.indexOf("telephone") >= 0) {
+            var telLow = context.createBiquadFilter(); telLow.type = "highpass"; telLow.frequency.value = 350;
+            var telHigh = context.createBiquadFilter(); telHigh.type = "lowpass"; telHigh.frequency.value = 3200;
+            source.connect(telLow); telLow.connect(telHigh); telHigh.connect(gainNode); gainNode.connect(output);
             } else {
               source.connect(gainNode); gainNode.connect(output);
             }

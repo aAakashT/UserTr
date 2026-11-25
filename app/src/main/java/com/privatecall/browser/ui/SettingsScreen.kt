@@ -12,8 +12,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,15 +83,40 @@ fun SettingsScreen() {
 
         Text("Legitimate VoIP audio")
         Text("Transparent voice processing (applies only to new getUserMedia captures)")
-        val voicePresets = listOf("Off", "Deep", "Bright", "Radio")
-        voicePresets.forEach { preset ->
+
+        val presetNames = remember(voicePreset.value) {
+            mutableStateMapOf<String, String>().apply {
+                PrivacyPreferences.voicePresetIds.forEach { presetId ->
+                    this[presetId] = privacyPreferences.voicePresetName(presetId)
+                }
+            }
+        }
+        FilterChip(
+            selected = voicePreset.value == "Off",
+            onClick = {
+                voicePreset.value = "Off"
+                privacyPreferences.voiceModulationPreset = "Off"
+            },
+            label = { Text("Off") },
+        )
+        PrivacyPreferences.voicePresetIds.forEach { presetId ->
             FilterChip(
-                selected = voicePreset.value == preset,
+                selected = voicePreset.value == presetId,
                 onClick = {
-                    voicePreset.value = preset
-                    privacyPreferences.voiceModulationPreset = preset
+                    voicePreset.value = presetId
+                    privacyPreferences.voiceModulationPreset = presetId
                 },
-                label = { Text(preset) },
+                label = { Text(presetNames[presetId] ?: presetId) },
+            )
+            OutlinedTextField(
+                value = presetNames[presetId] ?: "",
+                onValueChange = { newName ->
+                    presetNames[presetId] = newName
+                    privacyPreferences.setVoicePresetName(presetId, newName)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("${presetId.substringBefore('-').replaceFirstChar { it.uppercase() }} ${presetId.substringAfter('-')} name") },
+                singleLine = true,
             )
         }
         Row(
