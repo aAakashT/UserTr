@@ -13,6 +13,7 @@ import android.content.Intent
 import android.webkit.PermissionRequest
 import com.privatecall.browser.privacy.SitePermissionRepository
 import com.privatecall.browser.browser.DownloadRepository
+import com.privatecall.browser.audio.AudioRouter
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var downloadDestinationLauncher: ActivityResultLauncher<String>
     private var pendingDownloadUrl: String? = null
     private var pendingDownloadName: String = "download"
+    private var pendingMediaResult: ((Array<String>) -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,9 +75,14 @@ class MainActivity : ComponentActivity() {
                     grantedResources.forEach { sitePermissions.grant(origin, it) }
                 }
                 request?.grant(grantedResources)
+                if (grantedResources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+                    AudioRouter(this).requestCallAudioFocus()
+                }
             } else {
                 request?.deny()
             }
+            pendingMediaResult?.invoke(grantedResources)
+            pendingMediaResult = null
             pendingMediaRequest = null
             pendingPermissionResources = emptyArray()
             pendingPermissionRememberOrigin = null
@@ -92,6 +99,7 @@ class MainActivity : ComponentActivity() {
         request: PermissionRequest,
         origin: String?,
         remember: Boolean,
+        onResult: (Array<String>) -> Unit = {},
     ) {
         val resources = request.resources.filter {
             it == PermissionRequest.RESOURCE_AUDIO_CAPTURE ||
@@ -115,12 +123,17 @@ class MainActivity : ComponentActivity() {
                 resources.forEach { sitePermissions.grant(origin, it) }
             }
             request.grant(resources)
+            if (resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+                AudioRouter(this).requestCallAudioFocus()
+            }
+            onResult(resources)
             return
         }
 
         pendingMediaRequest = request
         pendingPermissionResources = resources
         pendingPermissionRememberOrigin = if (remember) origin else null
+        pendingMediaResult = onResult
         mediaPermissionLauncher.launch(androidPermissions)
     }
 

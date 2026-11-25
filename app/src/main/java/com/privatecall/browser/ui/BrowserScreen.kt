@@ -49,6 +49,83 @@ import com.privatecall.browser.MainActivity
 import com.privatecall.browser.security.UrlValidator
 import com.privatecall.browser.security.DownloadValidator
 import com.privatecall.browser.privacy.PrivacyPreferences
+import com.privatecall.browser.audio.AudioRouter
+
+private fun stopMediaCapture(webView: WebView?) {
+    webView?.evaluateJavascript(
+        """
+        (function () {
+          try {
+            if (window.__privateCallStopMedia) {
+              window.__privateCallStopMedia();
+            }
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+              navigator.mediaDevices.enumerateDevices = navigator.mediaDevices.enumerateDevices;
+            }
+          } catch (e) {}
+        })();
+        """.trimIndent(),
+        null,
+    )
+    webView?.reload()
+}
+
+private fun voiceProcessingScript(preset: String): String {
+    val gain = when (preset) {
+        "Deep" -> "0.95"
+        "Bright" -> "1.12"
+        "Radio" -> "0.85"
+        else -> "1.0"
+    }
+    return """
+    (function () {
+      if (!navigator.mediaDevices || navigator.mediaDevices.__privateCallWrapped) return;
+      navigator.mediaDevices.__privateCallWrapped = true;
+      var streams = [];
+      window.__privateCallStopMedia = function () {
+        streams.forEach(function (stream) {
+          stream.getTracks().forEach(function (track) { try { track.stop(); } catch (e) {} });
+        });
+        streams = [];
+      };
+      var originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = function (constraints) {
+        return originalGetUserMedia(constraints).then(function (stream) {
+          streams.push(stream);
+          var preset = "$preset";
+          if (!constraints || !constraints.audio || preset === "Off") return stream;
+          try {
+            var context = new (window.AudioContext || window.webkitAudioContext)();
+            var source = context.createMediaStreamSource(stream);
+            var gainNode = context.createGain();
+            gainNode.gain.value = $gain;
+            var output = context.createMediaStreamDestination();
+            if (preset === "Deep") {
+              var f = context.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1150;
+              source.connect(f); f.connect(gainNode); gainNode.connect(output);
+            } else if (preset === "Bright") {
+              var f2 = context.createBiquadFilter(); f2.type = "highpass"; f2.frequency.value = 180;
+              source.connect(f2); f2.connect(gainNode); gainNode.connect(output);
+            } else if (preset === "Radio") {
+              var low = context.createBiquadFilter(); low.type = "highpass"; low.frequency.value = 300;
+              var high = context.createBiquadFilter(); high.type = "lowpass"; high.frequency.value = 3400;
+              source.connect(low); low.connect(high); high.connect(gainNode); gainNode.connect(output);
+            } else {
+              source.connect(gainNode); gainNode.connect(output);
+            }
+            var processed = output.stream.getAudioTracks()[0];
+            var tracks = stream.getVideoTracks().concat(processed ? [processed] : []);
+            var combined = new MediaStream(tracks);
+            streams.push(combined);
+            return combined;
+          } catch (e) {
+            return stream;
+          }
+        });
+      };
+    })();
+    """.trimIndent()
+}
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -67,6 +144,10 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
     var rememberPermission by remember { mutableStateOf(false) }
     var pendingDownloadUrl by remember { mutableStateOf<String?>(null) }
     var pendingDownloadName by remember { mutableStateOf("") }
+    var microphoneActive by remember { mutableStateOf(false) }
+    var cameraActive by remember { mutableStateOf(false) }
+    val voicePreferences = remember { PrivacyPreferences(context) }
+    val voicePreset = voicePreferences.voiceModulationPreset
 
     pendingDownloadUrl?.let { downloadUrl ->
         val executable = DownloadValidator.isExecutable(pendingDownloadName)
@@ -132,7 +213,16 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
             confirmButton = {
                 TextButton(onClick = {
                     if (origin != null && context is MainActivity) {
-                        context.requestMediaPermissions(request, origin, rememberPermission)
+                        context.requestMediaPermissions(
+                            request,
+                            origin,
+                            rememberPermission,
+                        ) { granted ->
+                            microphoneActive =
+                                granted.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+                            cameraActive =
+                                granted.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+                        }
                     } else {
                         request.deny()
                     }
@@ -237,11 +327,32 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
             IconButton(onClick = { showTabs = true }) {
                 Icon(Icons.Default.Tab, contentDescription = "Tab switcher")
             }
-            IconButton(onClick = { viewModel.tabs.closeActive() }) {
+            IconButton(onClick = {
+                stopMediaCapture(webViewState.value)
+                val audioRouter = AudioRouter(context)
+                audioRouter.routeBluetooth(false)
+                audioRouter.routeSpeaker(false)
+                audioRouter.releaseCallAudioFocus()
+                val wasPrivate = viewModel.tabs.closeActive()
+                if (wasPrivate) {
+                    CookieManager.getInstance().removeSessionCookies(null)
+                    CookieManager.getInstance().flush()
+                }
+                microphoneActive = false
+                cameraActive = false
+            }) {
                 Icon(Icons.Default.Close, contentDescription = "Close active tab")
             }
-            TextButton(onClick = { viewModel.tabs.closeActive() }) {
-                Text("Stop microphone use")
+            TextButton(onClick = {
+                stopMediaCapture(webViewState.value)
+                val audioRouter = AudioRouter(context)
+                audioRouter.routeBluetooth(false)
+                audioRouter.routeSpeaker(false)
+                audioRouter.releaseCallAudioFocus()
+                microphoneActive = false
+                cameraActive = false
+            }) {
+                Text(if (microphoneActive || cameraActive) "Stop mic/camera" else "Mic/camera idle")
             }
         }
 
@@ -326,11 +437,13 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
                         CookieManager.getInstance().setAcceptCookie(false)
                         settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
                     } else {
+                        CookieManager.getInstance().setAcceptCookie(true)
                         CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
                     }
                     webViewClient = object : WebViewClient() {
                         override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                             url?.let(viewModel::pageStarted)
+                            view?.evaluateJavascript(voiceProcessingScript(voicePreset), null)
                         }
 
                         override fun onPageFinished(view: WebView?, url: String?) {
@@ -342,6 +455,7 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
                 }
             },
             update = { webView ->
+                webView.evaluateJavascript(voiceProcessingScript(voicePreset), null)
                 val desiredUrl = activeTab?.url ?: "https://www.example.com"
                 if (webView.url != desiredUrl && desiredUrl != "about:blank") {
                     webView.loadUrl(desiredUrl)

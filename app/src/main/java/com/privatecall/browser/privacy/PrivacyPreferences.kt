@@ -29,4 +29,8 @@ class PrivacyPreferences(context: Context) {
     var downloadsEnabled: Boolean
         get() = preferences.getBoolean("downloads", true)
         set(value) = preferences.edit().putBoolean("downloads", value).apply()
+
+    var voiceModulationPreset: String
+        get() = preferences.getString("voice_modulation", "Off") ?: "Off"
+        set(value) = preferences.edit().putString("voice_modulation", value).apply()
 }

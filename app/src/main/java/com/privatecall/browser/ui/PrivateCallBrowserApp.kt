@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import android.webkit.CookieManager
 import com.privatecall.browser.browser.BrowserViewModel
 
 private data class MainDestination(
@@ -47,7 +48,11 @@ fun PrivateCallBrowserApp(viewModel: BrowserViewModel) {
                         onClick = {
                             selected = index
                             if (index == 1) viewModel.tabs.setPrivateSessionEnabled(true)
-                            if (index == 0) viewModel.tabs.setPrivateSessionEnabled(false)
+                            if (index == 0) {
+                                viewModel.tabs.setPrivateSessionEnabled(false)
+                                CookieManager.getInstance().removeSessionCookies(null)
+                                CookieManager.getInstance().flush()
+                            }
                         },
                         icon = { Icon(destination.icon, contentDescription = destination.label) },
                         label = { Text(destination.label) },

@@ -130,6 +130,64 @@
 			],
 			"isBackground": false,
 			"group": "build"
+		},
+		{
+			"label": "Validate Android project",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"testDebugUnitTest",
+				"assembleDebug"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Diagnose Android build",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug",
+				"--stacktrace"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Locate JDK installations",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"ls -1 /usr/local/sdkman/candidates/java 2>/dev/null || true"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Android with JDK21",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"export JAVA_HOME=/usr/local/sdkman/candidates/java/21.0.13.0+2-ms; export PATH=\"$JAVA_HOME/bin:$PATH\"; ./gradlew testDebugUnitTest assembleDebug"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Locate Android SDK",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"for p in /opt/android-sdk /opt/android-sdk-linux /usr/local/lib/android/sdk /workspaces/android-sdk /root/Android/Sdk; do [ -d \"$p\" ] && echo \"$p\"; done"
+			],
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }

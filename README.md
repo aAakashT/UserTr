@@ -53,6 +53,9 @@ The debug APK is produced at `app/build/outputs/apk/debug/app-debug.apk`.
 - Downloads require user approval. The Storage Access Framework destination picker is used
   and executable/APK downloads receive an explicit warning.
 - WebRTC audio focus, speaker routing, and Bluetooth SCO controls are provided.
+- Transparent getUserMedia voice processing presets are optional and apply only to
+  browser-originated WebRTC microphone capture. `Mic/camera idle` stops media capture
+  and reloads the active page to end active tracks.
 - No advertising, analytics, tracking, telemetry, synchronization, password storage,
   autofill storage, automatic clipboard access, or covert recording.
 

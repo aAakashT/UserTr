@@ -6,6 +6,7 @@ import android.webkit.CookieManager
 import android.webkit.ServiceWorkerController
 import android.webkit.WebStorage
 import android.webkit.WebView
+import com.privatecall.browser.browser.DownloadRepository
 import java.io.File
 
 data class CleanupItem(
@@ -63,6 +64,10 @@ class CleanupRepository(private val context: Context) {
         runCleanup("Private session data") {
             CookieManager.getInstance().removeSessionCookies(null)
             CookieManager.getInstance().flush()
+        }.let(operations::add)
+
+        runCleanup("Download history") {
+            DownloadRepository(context).clear()
         }.let(operations::add)
 
         if (clearSitePermissions) {

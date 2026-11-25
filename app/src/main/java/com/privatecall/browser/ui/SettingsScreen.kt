@@ -36,6 +36,7 @@ fun SettingsScreen() {
     val audioRouter = remember { AudioRouter(context) }
     val speaker = remember { mutableStateOf(false) }
     val bluetooth = remember { mutableStateOf(false) }
+    val voicePreset = remember { mutableStateOf(privacyPreferences.voiceModulationPreset) }
 
     Column(
         modifier = Modifier
@@ -79,6 +80,18 @@ fun SettingsScreen() {
         }
 
         Text("Legitimate VoIP audio")
+        Text("Transparent voice processing (applies only to new getUserMedia captures)")
+        val voicePresets = listOf("Off", "Deep", "Bright", "Radio")
+        voicePresets.forEach { preset ->
+            FilterChip(
+                selected = voicePreset.value == preset,
+                onClick = {
+                    voicePreset.value = preset
+                    privacyPreferences.voiceModulationPreset = preset
+                },
+                label = { Text(preset) },
+            )
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
