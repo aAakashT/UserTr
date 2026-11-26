@@ -275,7 +275,7 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
         voiceScriptHandlers[tabId] = WebViewCompat.addDocumentStartJavaScript(
             webView,
             script,
-            setOf("https://*"),
+            setOf("*"),
         )
         voiceScriptContents[tabId] = script
     }
