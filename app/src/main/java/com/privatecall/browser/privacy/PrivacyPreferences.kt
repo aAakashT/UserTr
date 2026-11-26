@@ -34,6 +34,36 @@ class PrivacyPreferences(context: Context) {
         get() = preferences.getString("voice_modulation", "Off") ?: "Off"
         set(value) = preferences.edit().putString("voice_modulation", value).apply()
 
+    var voiceSampleName: String
+        get() = preferences.getString("voice_sample_name", "") ?: ""
+        set(value) = preferences.edit().putString("voice_sample_name", value).apply()
+
+    var voiceSampleBrightnessDb: Float
+        get() = preferences.getFloat("voice_sample_brightness_db", 0f)
+        set(value) = preferences.edit()
+            .putFloat("voice_sample_brightness_db", value.coerceIn(-6f, 6f))
+            .apply()
+
+    var voiceTestPreset: String
+        get() = preferences.getString("voice_test_preset", "Off") ?: "Off"
+        set(value) = preferences.edit().putString("voice_test_preset", value).apply()
+
+    var voiceTestEffectsEnabled: Boolean
+        get() = preferences.getBoolean("voice_test_effects_enabled", true)
+        set(value) = preferences.edit().putBoolean("voice_test_effects_enabled", value).apply()
+
+    var voiceTestNoiseSuppressionEnabled: Boolean
+        get() = preferences.getBoolean("voice_test_noise_suppression_enabled", true)
+        set(value) = preferences.edit().putBoolean("voice_test_noise_suppression_enabled", value).apply()
+
+    var voiceTestEchoCancellationEnabled: Boolean
+        get() = preferences.getBoolean("voice_test_echo_cancellation_enabled", true)
+        set(value) = preferences.edit().putBoolean("voice_test_echo_cancellation_enabled", value).apply()
+
+    var voiceTestAutomaticGainControlEnabled: Boolean
+        get() = preferences.getBoolean("voice_test_automatic_gain_control_enabled", true)
+        set(value) = preferences.edit().putBoolean("voice_test_automatic_gain_control_enabled", value).apply()
+
     fun voicePresetName(presetId: String): String {
         return preferences.getString("voice_name_$presetId", defaultVoicePresetName(presetId))
             ?: defaultVoicePresetName(presetId)

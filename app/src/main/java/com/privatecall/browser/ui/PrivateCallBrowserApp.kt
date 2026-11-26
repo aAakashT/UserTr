@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
@@ -35,6 +36,7 @@ fun PrivateCallBrowserApp(viewModel: BrowserViewModel) {
         MainDestination("Private", Icons.Default.Lock),
         MainDestination("Privacy", Icons.Default.Security),
         MainDestination("Downloads", Icons.Default.Download),
+        MainDestination("Voice test", Icons.Default.Mic),
         MainDestination("Settings", Icons.Default.Settings),
     )
     var selected by remember { mutableIntStateOf(0) }
@@ -67,7 +69,8 @@ fun PrivateCallBrowserApp(viewModel: BrowserViewModel) {
                 1 -> BrowserScreen(viewModel, privateSession = true)
                 2 -> PrivacyDashboardScreen(viewModel)
                 3 -> DownloadsScreen()
-                4 -> SettingsScreen()
+                4 -> VoiceTestScreen()
+                5 -> SettingsScreen()
             }
         }
     }

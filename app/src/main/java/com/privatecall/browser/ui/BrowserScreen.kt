@@ -1,12 +1,14 @@
 package com.privatecall.browser.ui
 
 import android.annotation.SuppressLint
+import android.view.View
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,11 +36,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
@@ -51,7 +58,7 @@ import com.privatecall.browser.security.DownloadValidator
 import com.privatecall.browser.privacy.PrivacyPreferences
 import com.privatecall.browser.audio.AudioRouter
 
-private fun stopMediaCapture(webView: WebView?) {
+private fun stopMediaCapture(webView: WebView?, reload: Boolean = true) {
     webView?.evaluateJavascript(
         """
         (function () {
@@ -67,33 +74,60 @@ private fun stopMediaCapture(webView: WebView?) {
         """.trimIndent(),
         null,
     )
-    webView?.reload()
+    if (reload) webView?.reload()
 }
 
-private fun voiceProcessingScript(preset: String): String {
+private fun voiceProcessingScript(preset: String, sampleBrightnessDb: Float): String {
+    val safeBrightnessDb = sampleBrightnessDb.takeIf { it.isFinite() }?.coerceIn(-6f, 6f) ?: 0f
     return """
     (function () {
       if (!navigator.mediaDevices) return;
       window.__privateCallVoicePreset = "$preset";
-      if (navigator.mediaDevices.__privateCallWrapped) return;
+      window.__privateCallVoiceBrightnessDb = $safeBrightnessDb;
+      if (navigator.mediaDevices.__privateCallWrapped) {
+        if (window.__privateCallSetVoiceToneProfile) {
+          window.__privateCallSetVoiceToneProfile($safeBrightnessDb);
+        }
+        return;
+      }
       navigator.mediaDevices.__privateCallWrapped = true;
       var streams = [];
+      var tonePipelines = [];
+      window.__privateCallSetVoiceToneProfile = function (brightnessDb) {
+        var gain = Math.max(-6, Math.min(6, Number(brightnessDb) || 0));
+        tonePipelines.forEach(function (pipeline) {
+          try {
+          pipeline.filter.gain.setTargetAtTime(gain, pipeline.context.currentTime, 0.04);
+          } catch (e) {}
+        });
+      };
       window.__privateCallStopMedia = function () {
         streams.forEach(function (stream) {
           stream.getTracks().forEach(function (track) { try { track.stop(); } catch (e) {} });
         });
         streams = [];
+        tonePipelines.forEach(function (pipeline) {
+          try { pipeline.context.close(); } catch (e) {}
+        });
+        tonePipelines = [];
       };
       var originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
       navigator.mediaDevices.getUserMedia = function (constraints) {
         return originalGetUserMedia(constraints).then(function (stream) {
           streams.push(stream);
           var preset = window.__privateCallVoicePreset || "Off";
-          if (!constraints || !constraints.audio || preset === "Off") return stream;
+          var brightnessDb = Number(window.__privateCallVoiceBrightnessDb) || 0;
+          if (!constraints || !constraints.audio ||
+            (preset === "Off" && Math.abs(brightnessDb) < 0.05)) return stream;
           try {
             var context = new (window.AudioContext || window.webkitAudioContext)();
             var source = context.createMediaStreamSource(stream);
             var gainNode = context.createGain();
+          var toneFilter = context.createBiquadFilter();
+          toneFilter.type = "highshelf";
+          toneFilter.frequency.value = 3200;
+          toneFilter.gain.value = brightnessDb;
+          tonePipelines.push({ context: context, filter: toneFilter });
           gainNode.gain.value =
             preset.indexOf("deep") >= 0 ? 0.95 :
             preset.indexOf("bright") >= 0 ? 1.12 :
@@ -102,49 +136,56 @@ private fun voiceProcessingScript(preset: String): String {
             preset.indexOf("telephone") >= 0 ? 0.80 :
             1.0;
             var output = context.createMediaStreamDestination();
+            function connectProcessed(node) {
+              node.connect(toneFilter);
+              toneFilter.connect(gainNode);
+              gainNode.connect(output);
+            }
           if (preset.indexOf("deep") >= 0) {
               var f = context.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1150;
-              source.connect(f); f.connect(gainNode); gainNode.connect(output);
+              source.connect(f); connectProcessed(f);
           } else if (preset.indexOf("bright") >= 0) {
               var f2 = context.createBiquadFilter(); f2.type = "highpass"; f2.frequency.value = 180;
-              source.connect(f2); f2.connect(gainNode); gainNode.connect(output);
+              source.connect(f2); connectProcessed(f2);
           } else if (preset.indexOf("radio") >= 0) {
               var low = context.createBiquadFilter(); low.type = "highpass"; low.frequency.value = 300;
               var high = context.createBiquadFilter(); high.type = "lowpass"; high.frequency.value = 3400;
-              source.connect(low); low.connect(high); high.connect(gainNode); gainNode.connect(output);
+              source.connect(low); low.connect(high); connectProcessed(high);
           } else if (preset.indexOf("warm") >= 0) {
             var warm = context.createBiquadFilter(); warm.type = "lowpass"; warm.frequency.value = 2400;
             var warmHigh = context.createBiquadFilter(); warmHigh.type = "highshelf"; warmHigh.frequency.value = 300; warmHigh.gain.value = -2;
-            source.connect(warm); warm.connect(warmHigh); warmHigh.connect(gainNode); gainNode.connect(output);
+            source.connect(warm); warm.connect(warmHigh); connectProcessed(warmHigh);
           } else if (preset.indexOf("cinematic") >= 0) {
             var cineLow = context.createBiquadFilter(); cineLow.type = "highpass"; cineLow.frequency.value = 80;
             var cineHigh = context.createBiquadFilter(); cineHigh.type = "lowpass"; cineHigh.frequency.value = 7000;
-            source.connect(cineLow); cineLow.connect(cineHigh); cineHigh.connect(gainNode); gainNode.connect(output);
+            source.connect(cineLow); cineLow.connect(cineHigh); connectProcessed(cineHigh);
           } else if (preset.indexOf("podcast") >= 0) {
             var podLow = context.createBiquadFilter(); podLow.type = "highpass"; podLow.frequency.value = 100;
             var podPresence = context.createBiquadFilter(); podPresence.type = "peaking"; podPresence.frequency.value = 2200; podPresence.Q.value = 1; podPresence.gain.value = 2;
-            source.connect(podLow); podLow.connect(podPresence); podPresence.connect(gainNode); gainNode.connect(output);
+            source.connect(podLow); podLow.connect(podPresence); connectProcessed(podPresence);
           } else if (preset.indexOf("bass") >= 0) {
             var bass = context.createBiquadFilter(); bass.type = "lowshelf"; bass.frequency.value = 180; bass.gain.value = 5;
             var bassCut = context.createBiquadFilter(); bassCut.type = "lowpass"; bassCut.frequency.value = 5200;
-            source.connect(bass); bass.connect(bassCut); bassCut.connect(gainNode); gainNode.connect(output);
+            source.connect(bass); bass.connect(bassCut); connectProcessed(bassCut);
           } else if (preset.indexOf("crisp") >= 0) {
             var crisp = context.createBiquadFilter(); crisp.type = "peaking"; crisp.frequency.value = 3200; crisp.Q.value = 1.2; crisp.gain.value = 4;
-            source.connect(crisp); crisp.connect(gainNode); gainNode.connect(output);
+            source.connect(crisp); connectProcessed(crisp);
           } else if (preset.indexOf("telephone") >= 0) {
             var telLow = context.createBiquadFilter(); telLow.type = "highpass"; telLow.frequency.value = 350;
             var telHigh = context.createBiquadFilter(); telHigh.type = "lowpass"; telHigh.frequency.value = 3200;
-            source.connect(telLow); telLow.connect(telHigh); telHigh.connect(gainNode); gainNode.connect(output);
+            source.connect(telLow); telLow.connect(telHigh); connectProcessed(telHigh);
             } else {
-              source.connect(gainNode); gainNode.connect(output);
+              connectProcessed(source);
             }
+            if (context.state === "suspended") context.resume();
             var processed = output.stream.getAudioTracks()[0];
             var tracks = stream.getVideoTracks().concat(processed ? [processed] : []);
             var combined = new MediaStream(tracks);
             streams.push(combined);
             return combined;
           } catch (e) {
-            return stream;
+            stream.getTracks().forEach(function (track) { try { track.stop(); } catch (_) {} });
+            throw e;
           }
         });
       };
@@ -162,7 +203,8 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
     val secure by viewModel.secure.collectAsState()
     val httpWarning by viewModel.httpWarning.collectAsState()
     var showTabs by remember { mutableStateOf(false) }
-    val webViewState = remember(activeId) { mutableStateOf<WebView?>(null) }
+    val webViews = remember { mutableStateMapOf<Long, WebView>() }
+    val activeWebView = webViews[activeId]
     val context = LocalContext.current
     var pendingPermissionRequest by remember { mutableStateOf<PermissionRequest?>(null) }
     var pendingPermissionOrigin by remember { mutableStateOf<String?>(null) }
@@ -173,6 +215,39 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
     var cameraActive by remember { mutableStateOf(false) }
     val voicePreferences = remember { PrivacyPreferences(context) }
     val voicePreset = voicePreferences.voiceModulationPreset
+    var voiceSampleName by remember { mutableStateOf(voicePreferences.voiceSampleName) }
+    var voiceSampleBrightnessDb by remember {
+        mutableStateOf(voicePreferences.voiceSampleBrightnessDb)
+    }
+    val currentVoiceSampleBrightnessDb by rememberUpdatedState(voiceSampleBrightnessDb)
+    var voiceSampleError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(activeId) {
+        viewModel.syncActiveTab()
+    }
+
+    val tabIds = tabs.map { it.id }
+    LaunchedEffect(tabIds) {
+        val removedIds = webViews.keys.filterNot { it in tabIds }
+        removedIds.forEach { id ->
+            webViews.remove(id)?.let { webView ->
+                stopMediaCapture(webView, reload = false)
+                webView.stopLoading()
+                webView.destroy()
+            }
+        }
+    }
+
+    DisposableEffect(webViews) {
+        onDispose {
+            webViews.values.toList().forEach { webView ->
+                stopMediaCapture(webView, reload = false)
+                webView.stopLoading()
+                webView.destroy()
+            }
+            webViews.clear()
+        }
+    }
 
     pendingDownloadUrl?.let { downloadUrl ->
         val executable = DownloadValidator.isExecutable(pendingDownloadName)
@@ -302,10 +377,10 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
         ) {
-            IconButton(onClick = { webViewState.value?.goBack() }) {
+            IconButton(onClick = { activeWebView?.goBack() }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
-            IconButton(onClick = { webViewState.value?.goForward() }) {
+            IconButton(onClick = { activeWebView?.goForward() }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Forward")
             }
             OutlinedTextField(
@@ -323,10 +398,10 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = { viewModel.navigate(address) }),
             )
-            IconButton(onClick = { webViewState.value?.reload() }) {
+            IconButton(onClick = { activeWebView?.reload() }) {
                 Icon(Icons.Default.Refresh, contentDescription = "Reload")
             }
-            IconButton(onClick = { webViewState.value?.stopLoading() }) {
+            IconButton(onClick = { activeWebView?.stopLoading() }) {
                 Icon(Icons.Default.Stop, contentDescription = "Stop")
             }
         }
@@ -353,7 +428,7 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
                 Icon(Icons.Default.Tab, contentDescription = "Tab switcher")
             }
             IconButton(onClick = {
-                stopMediaCapture(webViewState.value)
+                stopMediaCapture(activeWebView, reload = false)
                 val audioRouter = AudioRouter(context)
                 audioRouter.routeBluetooth(false)
                 audioRouter.routeSpeaker(false)
@@ -369,7 +444,7 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
                 Icon(Icons.Default.Close, contentDescription = "Close active tab")
             }
             TextButton(onClick = {
-                stopMediaCapture(webViewState.value)
+                stopMediaCapture(activeWebView)
                 val audioRouter = AudioRouter(context)
                 audioRouter.routeBluetooth(false)
                 audioRouter.routeSpeaker(false)
@@ -379,113 +454,177 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
             }) {
                 Text(if (microphoneActive || cameraActive) "Stop mic/camera" else "Mic/camera idle")
             }
+            TextButton(onClick = {
+                val activity = context as? MainActivity
+                if (activity == null) {
+                    voiceSampleError = "Voice samples can only be selected in the browser."
+                } else {
+                    activity.chooseVoiceSample { error ->
+                        voiceSampleError = error
+                        if (error == null) {
+                            voiceSampleName = voicePreferences.voiceSampleName
+                            voiceSampleBrightnessDb = voicePreferences.voiceSampleBrightnessDb
+                        }
+                    }
+                }
+            }) {
+                Text(if (voiceSampleName.isBlank()) "Use voice sample" else "Sample active")
+            }
+            if (voiceSampleName.isNotBlank()) {
+                TextButton(onClick = {
+                    voiceSampleName = ""
+                    voiceSampleBrightnessDb = 0f
+                    voicePreferences.voiceSampleName = ""
+                    voicePreferences.voiceSampleBrightnessDb = 0f
+                }) {
+                    Text("Clear sample")
+                }
+            }
+        }
+        voiceSampleError?.let { Text("Voice sample error: $it") }
+        if (voiceSampleName.isNotBlank()) {
+            Text(
+                "Local tone profile: $voiceSampleName. Applies to new microphone captures. " +
+                    "This shapes tone, not voice identity or pitch.",
+            )
         }
 
         if (activeTab?.loading == true) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
 
-        AndroidView(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            factory = { viewContext ->
-                WebView(viewContext).apply {
-                    webViewState.value = this
-                    val privacyPreferences = PrivacyPreferences(viewContext)
-                    settings.javaScriptEnabled = privacyPreferences.javascriptEnabled
-                    settings.domStorageEnabled = activeTab?.private != true
-                    settings.databaseEnabled = activeTab?.private != true
-                    settings.allowFileAccess = false
-                    settings.allowContentAccess = false
-                    settings.allowFileAccessFromFileURLs = false
-                    settings.allowUniversalAccessFromFileURLs = false
-                    settings.mediaPlaybackRequiresUserGesture = false
-                    if (activeTab?.private == true) {
-                        settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
-                    } else {
-                        settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
-                    }
-                    setDownloadListener { url, _, contentDisposition, mimeType, _ ->
-                        val userName = android.webkit.URLUtil.guessFileName(
-                            url,
-                            contentDisposition,
-                            mimeType,
-                        )
-                        if (DownloadValidator.isAllowedUrl(url)) {
-                            pendingDownloadUrl = url
-                            pendingDownloadName = userName
-                        }
-                    }
-                    isVerticalScrollBarEnabled = true
-                    isHorizontalScrollBarEnabled = false
-                    webChromeClient = object : WebChromeClient() {
-                        override fun onPermissionRequest(request: PermissionRequest) {
-                            val origin = request.origin?.toString()?.let(UrlValidator::origin)
-                            val supported = request.resources.all {
-                                it == PermissionRequest.RESOURCE_AUDIO_CAPTURE ||
-                                    it == PermissionRequest.RESOURCE_VIDEO_CAPTURE
+        ) {
+            tabs.forEach { tab ->
+                key(tab.id) {
+                    AndroidView(
+                        modifier = Modifier.fillMaxSize(),
+                        factory = { viewContext ->
+                            WebView(viewContext).apply {
+                                webViews[tab.id] = this
+                                val privacyPreferences = PrivacyPreferences(viewContext)
+                                settings.javaScriptEnabled = privacyPreferences.javascriptEnabled
+                                settings.domStorageEnabled = !tab.private
+                                settings.databaseEnabled = !tab.private
+                                settings.allowFileAccess = false
+                                settings.allowContentAccess = false
+                                settings.allowFileAccessFromFileURLs = false
+                                settings.allowUniversalAccessFromFileURLs = false
+                                settings.mediaPlaybackRequiresUserGesture = false
+                                settings.cacheMode = if (tab.private) {
+                                    android.webkit.WebSettings.LOAD_NO_CACHE
+                                } else {
+                                    android.webkit.WebSettings.LOAD_DEFAULT
+                                }
+                                setDownloadListener { url, _, contentDisposition, mimeType, _ ->
+                                    val userName = android.webkit.URLUtil.guessFileName(
+                                        url,
+                                        contentDisposition,
+                                        mimeType,
+                                    )
+                                    if (DownloadValidator.isAllowedUrl(url)) {
+                                        pendingDownloadUrl = url
+                                        pendingDownloadName = userName
+                                    }
+                                }
+                                isVerticalScrollBarEnabled = true
+                                isHorizontalScrollBarEnabled = false
+                                webChromeClient = object : WebChromeClient() {
+                                    override fun onPermissionRequest(request: PermissionRequest) {
+                                        val origin = request.origin?.toString()?.let(UrlValidator::origin)
+                                        val supported = request.resources.all {
+                                            it == PermissionRequest.RESOURCE_AUDIO_CAPTURE ||
+                                                it == PermissionRequest.RESOURCE_VIDEO_CAPTURE
+                                        }
+                                        if (origin == null || !origin.startsWith("https://") || !supported) {
+                                            request.deny()
+                                            return
+                                        }
+                                        val repository =
+                                            (context as? MainActivity)?.sitePermissionRepository()
+                                        val alreadyGranted = request.resources.all {
+                                            repository?.isGranted(origin, it) == true
+                                        }
+                                        if (alreadyGranted && context is MainActivity) {
+                                            context.requestMediaPermissions(request, origin, false)
+                                        } else {
+                                            pendingPermissionOrigin = origin
+                                            pendingPermissionRequest = request
+                                        }
+                                    }
+
+                                    override fun onPermissionRequestCanceled(
+                                        request: PermissionRequest,
+                                    ) {
+                                        if (pendingPermissionRequest === request) {
+                                            pendingPermissionRequest = null
+                                            pendingPermissionOrigin = null
+                                        }
+                                    }
+
+                                    override fun onGeolocationPermissionsShowPrompt(
+                                        origin: String?,
+                                        callback: android.webkit.GeolocationPermissions.Callback?,
+                                    ) {
+                                        callback?.invoke(origin, false, false)
+                                    }
+                                }
+                                webViewClient = object : WebViewClient() {
+                                    override fun onPageStarted(
+                                        view: WebView?,
+                                        url: String?,
+                                        favicon: android.graphics.Bitmap?,
+                                    ) {
+                                        url?.let { viewModel.pageStarted(tab.id, it) }
+                                        view?.evaluateJavascript(
+                                            voiceProcessingScript(
+                                                voicePreset,
+                                                currentVoiceSampleBrightnessDb,
+                                            ),
+                                            null,
+                                        )
+                                    }
+
+                                    override fun onPageFinished(view: WebView?, url: String?) {
+                                        viewModel.pageFinished(tab.id, view?.title, url)
+                                        viewModel.updateHistoryState(
+                                            tab.id,
+                                            view?.canGoBack() == true,
+                                            view?.canGoForward() == true,
+                                        )
+                                    }
+                                }
+                                loadUrl(tab.url)
                             }
-                            if (origin == null || !origin.startsWith("https://") || !supported) {
-                                request.deny()
-                                return
-                            }
-                            val repository =
-                                (context as? MainActivity)?.sitePermissionRepository()
-                            val alreadyGranted = request.resources.all {
-                                repository?.isGranted(origin, it) == true
-                            }
-                            if (alreadyGranted && context is MainActivity) {
-                                context.requestMediaPermissions(request, origin, false)
+                        },
+                        update = { webView ->
+                            webView.visibility = if (tab.id == activeId) {
+                                View.VISIBLE
                             } else {
-                                pendingPermissionOrigin = origin
-                                pendingPermissionRequest = request
+                                View.INVISIBLE
                             }
-                        }
-
-                        override fun onPermissionRequestCanceled(
-                            request: PermissionRequest,
-                        ) {
-                            if (pendingPermissionRequest === request) {
-                                pendingPermissionRequest = null
-                                pendingPermissionOrigin = null
+                            if (tab.id == activeId) {
+                                val cookieManager = CookieManager.getInstance()
+                                cookieManager.setAcceptCookie(!tab.private)
+                                if (!tab.private) {
+                                    cookieManager.setAcceptThirdPartyCookies(webView, false)
+                                }
+                                webView.evaluateJavascript(
+                                    voiceProcessingScript(
+                                        voicePreset,
+                                        currentVoiceSampleBrightnessDb,
+                                    ),
+                                    null,
+                                )
                             }
-                        }
-
-                        override fun onGeolocationPermissionsShowPrompt(
-                            origin: String?,
-                            callback: android.webkit.GeolocationPermissions.Callback?,
-                        ) {
-                            callback?.invoke(origin, false, false)
-                        }
-                    }
-                    val isPrivate = activeTab?.private == true
-                    if (isPrivate) {
-                        CookieManager.getInstance().setAcceptCookie(false)
-                        settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
-                    } else {
-                        CookieManager.getInstance().setAcceptCookie(true)
-                        CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
-                    }
-                    webViewClient = object : WebViewClient() {
-                        override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                            url?.let(viewModel::pageStarted)
-                            view?.evaluateJavascript(voiceProcessingScript(voicePreset), null)
-                        }
-
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            viewModel.pageFinished(view?.title, url)
-                            viewModel.updateHistoryState(view?.canGoBack() == true, view?.canGoForward() == true)
-                        }
-                    }
-                    loadUrl(activeTab?.url ?: "https://www.example.com")
+                            if (webView.url != tab.url) {
+                                webView.loadUrl(tab.url)
+                            }
+                        },
+                    )
                 }
-            },
-            update = { webView ->
-                webView.evaluateJavascript(voiceProcessingScript(voicePreset), null)
-                val desiredUrl = activeTab?.url ?: "https://www.example.com"
-                if (webView.url != desiredUrl && desiredUrl != "about:blank") {
-                    webView.loadUrl(desiredUrl)
-                }
-            },
-        )
+            }
+        }
     }
 }

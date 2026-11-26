@@ -53,6 +53,18 @@ The debug APK is produced at `app/build/outputs/apk/debug/app-debug.apk`.
 - Downloads require user approval. The Storage Access Framework destination picker is used
   and executable/APK downloads receive an explicit warning.
 - WebRTC audio focus, speaker routing, and Bluetooth SCO controls are provided.
+- The standalone Voice test screen requests microphone permission explicitly, shows a live
+  input level, optionally previews processed audio, and exposes device-supported noise
+  suppression, echo cancellation, automatic gain control, and tone presets. Test audio is
+  processed locally and is not recorded or uploaded. Use headphones while monitoring.
+- The standalone test does not inject audio into calls; browser call processing remains
+  dependent on each site's WebRTC implementation and the Android device.
+- Browser tabs retain separate WebViews and page history while switching between tabs.
+- A selected supported audio sample (including MP3) can generate a small local EQ tone
+  profile for browser microphone captures. Only derived EQ settings and the selected filename
+  are retained; the sample itself is not stored or uploaded. This is a tone approximation,
+  not pitch shifting or voice identity conversion. Site/WebView support can vary, and active
+  calls may need to reacquire the mic.
 - Transparent getUserMedia voice processing presets are optional and apply only to
   browser-originated WebRTC microphone capture. `Mic/camera idle` stops media capture
   and reloads the active page to end active tracks.

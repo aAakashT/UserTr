@@ -30,7 +30,7 @@ class TabRepository {
         val activeId = _activeTabId.value
         val active = tabs.firstOrNull { it.id == activeId } ?: return false
         if (tabs.size == 1) {
-            val replacement = BrowserTab(id = active.id, private = active.private)
+            val replacement = BrowserTab(id = nextId++, private = active.private)
             _tabs.value = listOf(replacement)
             _activeTabId.value = replacement.id
             return active.private
@@ -47,7 +47,10 @@ class TabRepository {
     }
 
     fun updateActive(update: (BrowserTab) -> BrowserTab) {
-        val id = _activeTabId.value
+        updateTab(_activeTabId.value, update)
+    }
+
+    fun updateTab(id: Long, update: (BrowserTab) -> BrowserTab) {
         _tabs.update { all -> all.map { tab -> if (tab.id == id) update(tab) else tab } }
     }
 

@@ -9,11 +9,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.content.Intent
+import android.database.Cursor
+import android.provider.OpenableColumns
 import android.webkit.PermissionRequest
 import com.privatecall.browser.privacy.SitePermissionRepository
 import com.privatecall.browser.browser.DownloadRepository
 import com.privatecall.browser.audio.AudioRouter
+import com.privatecall.browser.audio.VoiceSampleDecoder
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -22,9 +24,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.lifecycleScope
 import com.privatecall.browser.browser.BrowserViewModel
 import com.privatecall.browser.ui.PrivateCallBrowserApp
 import com.privatecall.browser.ui.theme.PrivateCallBrowserTheme
+import java.io.IOException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     private lateinit var mediaPermissionLauncher: ActivityResultLauncher<Array<String>>
@@ -34,9 +41,11 @@ class MainActivity : ComponentActivity() {
     private lateinit var sitePermissions: SitePermissionRepository
     private lateinit var downloadRepository: DownloadRepository
     private lateinit var downloadDestinationLauncher: ActivityResultLauncher<String>
+    private lateinit var voiceSampleLauncher: ActivityResultLauncher<Array<String>>
     private var pendingDownloadUrl: String? = null
     private var pendingDownloadName: String = "download"
     private var pendingMediaResult: ((Array<String>) -> Unit)? = null
+    private var pendingVoiceSampleResult: ((String?) -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +61,33 @@ class MainActivity : ComponentActivity() {
                 downloadRepository.addCompleted(name, url)
             }
             pendingDownloadUrl = null
+        }
+        voiceSampleLauncher = registerForActivityResult(
+            ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            val callback = pendingVoiceSampleResult
+            pendingVoiceSampleResult = null
+            if (uri == null) return@registerForActivityResult
+            lifecycleScope.launch {
+                try {
+                    val (profile, name) = withContext(Dispatchers.IO) {
+                        VoiceSampleDecoder(this@MainActivity).analyze(uri) to
+                            queryDisplayName(uri).take(80).ifBlank { "Voice sample" }
+                    }
+                    val preferences = com.privatecall.browser.privacy.PrivacyPreferences(this@MainActivity)
+                    preferences.voiceSampleBrightnessDb = profile.brightnessDb
+                    preferences.voiceSampleName = name
+                    callback?.invoke(null)
+                } catch (error: IOException) {
+                    callback?.invoke(error.message ?: "The voice sample could not be read.")
+                } catch (error: IllegalArgumentException) {
+                    callback?.invoke(error.message ?: "The voice sample format is not supported.")
+                } catch (error: SecurityException) {
+                    callback?.invoke("Permission to read the selected sample was denied.")
+                } catch (error: IllegalStateException) {
+                    callback?.invoke(error.message ?: "This device could not decode the audio sample.")
+                }
+            }
         }
         mediaPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions(),
@@ -147,6 +183,22 @@ class MainActivity : ComponentActivity() {
     }
 
     fun downloadRepository(): DownloadRepository = downloadRepository
+
+    fun chooseVoiceSample(onResult: (String?) -> Unit) {
+        pendingVoiceSampleResult = onResult
+        voiceSampleLauncher.launch(arrayOf("audio/*"))
+    }
+
+    private fun queryDisplayName(uri: Uri): String {
+        contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            .use { cursor: Cursor? ->
+                if (cursor != null && cursor.moveToFirst()) {
+                    val column = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (column >= 0) return cursor.getString(column).orEmpty()
+                }
+            }
+        return "Voice sample"
+    }
 
     private fun saveDownloadToUri(url: String, destination: Uri) {
         java.util.concurrent.Executors.newSingleThreadExecutor().execute {
