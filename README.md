@@ -39,6 +39,8 @@ The debug APK is produced at `app/build/outputs/apk/debug/app-debug.apk`.
 - Dark-first Material 3 interface with bottom navigation and responsive Compose surfaces.
 - Address/search bar, HTTPS indicator, HTTP warning, back, forward, reload, stop, tabs,
   normal tabs, private tabs, and a private-session tab switcher.
+- HTTP pages are allowed to load and display an unencrypted-connection warning; use HTTPS
+  for sensitive activity.
 - URL normalization and checks for insecure schemes and private/local network targets.
 - WebView file access, universal file access, and content access are disabled.
 - Geolocation prompts are denied. Camera and microphone prompts are limited to HTTPS

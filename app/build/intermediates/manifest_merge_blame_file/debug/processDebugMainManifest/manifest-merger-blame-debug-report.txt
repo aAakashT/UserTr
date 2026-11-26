@@ -67,8 +67,8 @@
 39-->/workspaces/UserTr/app/src/main/AndroidManifest.xml:23:9-35
 40        android:theme="@style/Theme.PrivateCallBrowser"
 40-->/workspaces/UserTr/app/src/main/AndroidManifest.xml:24:9-56
-41        android:usesCleartextTraffic="false" >
-41-->/workspaces/UserTr/app/src/main/AndroidManifest.xml:25:9-45
+41        android:usesCleartextTraffic="true" >
+41-->/workspaces/UserTr/app/src/main/AndroidManifest.xml:25:9-44
 42        <activity
 42-->/workspaces/UserTr/app/src/main/AndroidManifest.xml:26:9-43:20
 43            android:name="com.privatecall.browser.MainActivity"

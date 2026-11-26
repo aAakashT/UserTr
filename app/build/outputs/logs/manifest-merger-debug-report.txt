@@ -134,7 +134,7 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] /home/codespace/.gradle/cac
 	android:dataExtractionRules
 		ADDED from /workspaces/UserTr/app/src/main/AndroidManifest.xml:18:9-65
 	android:usesCleartextTraffic
-		ADDED from /workspaces/UserTr/app/src/main/AndroidManifest.xml:25:9-45
+		ADDED from /workspaces/UserTr/app/src/main/AndroidManifest.xml:25:9-44
 activity#com.privatecall.browser.MainActivity
 ADDED from /workspaces/UserTr/app/src/main/AndroidManifest.xml:26:9-43:20
 	android:screenOrientation
