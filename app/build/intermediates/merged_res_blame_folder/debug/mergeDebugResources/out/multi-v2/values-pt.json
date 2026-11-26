@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.privatecall.browser.app-mergeDebugResources-51:/values-pt/values-pt.xml",
+            "outputFile": "com.privatecall.browser.app-mergeDebugResources-52:/values-pt/values-pt.xml",
             "map": [
                 {
                     "source": "/home/codespace/.gradle/caches/8.9/transforms/b1d196674fcf86ebe35485f15500c334/transformed/material3-release/res/values-pt/values-pt.xml",

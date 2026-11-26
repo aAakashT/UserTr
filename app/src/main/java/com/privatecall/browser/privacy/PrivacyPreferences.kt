@@ -34,6 +34,13 @@ class PrivacyPreferences(context: Context) {
         get() = preferences.getString("voice_modulation", "Off") ?: "Off"
         set(value) = preferences.edit().putString("voice_modulation", value).apply()
 
+    var voiceModulationEnabled: Boolean
+        get() = preferences.getBoolean(
+            "voice_modulation_enabled",
+            voiceModulationPreset != "Off" || voiceSampleName.isNotBlank(),
+        )
+        set(value) = preferences.edit().putBoolean("voice_modulation_enabled", value).apply()
+
     var voiceSampleName: String
         get() = preferences.getString("voice_sample_name", "") ?: ""
         set(value) = preferences.edit().putString("voice_sample_name", value).apply()
@@ -88,6 +95,7 @@ class PrivacyPreferences(context: Context) {
             "male-crisp", "female-crisp",
             "male-telephone", "female-telephone",
             "male-natural", "female-natural",
+            "effect-robot", "effect-distorted", "effect-echo",
         )
 
         val voiceTypes = listOf(
@@ -96,6 +104,14 @@ class PrivacyPreferences(context: Context) {
         )
 
         fun defaultVoicePresetName(presetId: String): String {
+            if (presetId.startsWith("effect-")) {
+                return when (presetId.removePrefix("effect-")) {
+                    "robot" -> "Robotic"
+                    "distorted" -> "Distorted"
+                    "echo" -> "Echo"
+                    else -> "Audio effect"
+                }
+            }
             val gender = if (presetId.startsWith("male-")) "Male" else "Female"
             val type = presetId.substringAfter('-', "").replaceFirstChar { it.uppercase() }
             return "$gender $type"

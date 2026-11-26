@@ -4,6 +4,7 @@ ADDED from /workspaces/UserTr/app/src/main/AndroidManifest.xml:2:1-45:12
 INJECTED from /workspaces/UserTr/app/src/main/AndroidManifest.xml:2:1-45:12
 INJECTED from /workspaces/UserTr/app/src/main/AndroidManifest.xml:2:1-45:12
 INJECTED from /workspaces/UserTr/app/src/main/AndroidManifest.xml:2:1-45:12
+MERGED from [androidx.webkit:webkit:1.12.1] /home/codespace/.gradle/caches/8.9/transforms/622779ad603a284b32f7e513d02fd54a/transformed/webkit-1.12.1/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.navigation:navigation-common:2.8.4] /home/codespace/.gradle/caches/8.9/transforms/762992857a2509213f78291299bb8946/transformed/navigation-common-2.8.4/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-runtime:2.8.4] /home/codespace/.gradle/caches/8.9/transforms/a11d4ede99ff25cf2ec652eba74aab9c/transformed/navigation-runtime-2.8.4/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-common-ktx:2.8.4] /home/codespace/.gradle/caches/8.9/transforms/6c1bc535d838640f1227f98d33019a09/transformed/navigation-common-ktx-2.8.4/AndroidManifest.xml:2:1-7:12
@@ -48,11 +49,11 @@ MERGED from [androidx.graphics:graphics-path:1.0.1] /home/codespace/.gradle/cach
 MERGED from [androidx.core:core:1.13.1] /home/codespace/.gradle/caches/8.9/transforms/3f4414e7258e46b34c51e68305e2ec6f/transformed/core-1.13.1/AndroidManifest.xml:17:1-30:12
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /home/codespace/.gradle/caches/8.9/transforms/4ba721d16715c7e9b4ac0f245d22d41c/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:17:1-23:12
 MERGED from [androidx.core:core-ktx:1.13.1] /home/codespace/.gradle/caches/8.9/transforms/50d97c89012a7627b364c687036dd466/transformed/core-ktx-1.13.1/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.runtime:runtime-android:1.7.5] /home/codespace/.gradle/caches/8.9/transforms/adc88eefc038f452fb6bd0074f8f3f56/transformed/runtime-release/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.runtime:runtime-saveable-android:1.7.5] /home/codespace/.gradle/caches/8.9/transforms/55ddc2e20d4bd75245c24be4b1944cf9/transformed/runtime-saveable-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.runtime:runtime-android:1.7.5] /home/codespace/.gradle/caches/8.9/transforms/adc88eefc038f452fb6bd0074f8f3f56/transformed/runtime-release/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] /home/codespace/.gradle/caches/8.9/transforms/e0e338b3f95b151fd3e8aa27f7091dc0/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/codespace/.gradle/caches/8.9/transforms/6d440091e6cd38d79f85b9967a866a9c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] /home/codespace/.gradle/caches/8.9/transforms/03a56a044de1f025411bf0954701744f/transformed/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/codespace/.gradle/caches/8.9/transforms/6d440091e6cd38d79f85b9967a866a9c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/8.9/transforms/4d07dd122260385b5a0f7c79a656e780/transformed/profileinstaller-1.3.1/AndroidManifest.xml:17:1-55:12
 MERGED from [androidx.startup:startup-runtime:1.1.1] /home/codespace/.gradle/caches/8.9/transforms/802d15ab3f17d0d372794a38f6d4f737/transformed/startup-runtime-1.1.1/AndroidManifest.xml:17:1-33:12
 MERGED from [androidx.tracing:tracing:1.0.0] /home/codespace/.gradle/caches/8.9/transforms/63f6b5eee6dc289032441efb8395b1fc/transformed/tracing-1.0.0/AndroidManifest.xml:17:1-24:12
@@ -178,6 +179,8 @@ uses-sdk
 INJECTED from /workspaces/UserTr/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /workspaces/UserTr/app/src/main/AndroidManifest.xml
 INJECTED from /workspaces/UserTr/app/src/main/AndroidManifest.xml
+MERGED from [androidx.webkit:webkit:1.12.1] /home/codespace/.gradle/caches/8.9/transforms/622779ad603a284b32f7e513d02fd54a/transformed/webkit-1.12.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.webkit:webkit:1.12.1] /home/codespace/.gradle/caches/8.9/transforms/622779ad603a284b32f7e513d02fd54a/transformed/webkit-1.12.1/AndroidManifest.xml:5:5-44
 MERGED from [androidx.navigation:navigation-common:2.8.4] /home/codespace/.gradle/caches/8.9/transforms/762992857a2509213f78291299bb8946/transformed/navigation-common-2.8.4/AndroidManifest.xml:20:5-44
 MERGED from [androidx.navigation:navigation-common:2.8.4] /home/codespace/.gradle/caches/8.9/transforms/762992857a2509213f78291299bb8946/transformed/navigation-common-2.8.4/AndroidManifest.xml:20:5-44
 MERGED from [androidx.navigation:navigation-runtime:2.8.4] /home/codespace/.gradle/caches/8.9/transforms/a11d4ede99ff25cf2ec652eba74aab9c/transformed/navigation-runtime-2.8.4/AndroidManifest.xml:20:5-44
@@ -266,16 +269,16 @@ MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /home/codesp
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /home/codespace/.gradle/caches/8.9/transforms/4ba721d16715c7e9b4ac0f245d22d41c/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:20:5-21:38
 MERGED from [androidx.core:core-ktx:1.13.1] /home/codespace/.gradle/caches/8.9/transforms/50d97c89012a7627b364c687036dd466/transformed/core-ktx-1.13.1/AndroidManifest.xml:5:5-44
 MERGED from [androidx.core:core-ktx:1.13.1] /home/codespace/.gradle/caches/8.9/transforms/50d97c89012a7627b364c687036dd466/transformed/core-ktx-1.13.1/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-android:1.7.5] /home/codespace/.gradle/caches/8.9/transforms/adc88eefc038f452fb6bd0074f8f3f56/transformed/runtime-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-android:1.7.5] /home/codespace/.gradle/caches/8.9/transforms/adc88eefc038f452fb6bd0074f8f3f56/transformed/runtime-release/AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.runtime:runtime-saveable-android:1.7.5] /home/codespace/.gradle/caches/8.9/transforms/55ddc2e20d4bd75245c24be4b1944cf9/transformed/runtime-saveable-release/AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.runtime:runtime-saveable-android:1.7.5] /home/codespace/.gradle/caches/8.9/transforms/55ddc2e20d4bd75245c24be4b1944cf9/transformed/runtime-saveable-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-android:1.7.5] /home/codespace/.gradle/caches/8.9/transforms/adc88eefc038f452fb6bd0074f8f3f56/transformed/runtime-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-android:1.7.5] /home/codespace/.gradle/caches/8.9/transforms/adc88eefc038f452fb6bd0074f8f3f56/transformed/runtime-release/AndroidManifest.xml:5:5-44
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] /home/codespace/.gradle/caches/8.9/transforms/e0e338b3f95b151fd3e8aa27f7091dc0/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:5:5-44
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] /home/codespace/.gradle/caches/8.9/transforms/e0e338b3f95b151fd3e8aa27f7091dc0/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:5:5-44
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/codespace/.gradle/caches/8.9/transforms/6d440091e6cd38d79f85b9967a866a9c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/codespace/.gradle/caches/8.9/transforms/6d440091e6cd38d79f85b9967a866a9c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.interpolator:interpolator:1.0.0] /home/codespace/.gradle/caches/8.9/transforms/03a56a044de1f025411bf0954701744f/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.interpolator:interpolator:1.0.0] /home/codespace/.gradle/caches/8.9/transforms/03a56a044de1f025411bf0954701744f/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/codespace/.gradle/caches/8.9/transforms/6d440091e6cd38d79f85b9967a866a9c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/codespace/.gradle/caches/8.9/transforms/6d440091e6cd38d79f85b9967a866a9c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/8.9/transforms/4d07dd122260385b5a0f7c79a656e780/transformed/profileinstaller-1.3.1/AndroidManifest.xml:21:5-44
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/8.9/transforms/4d07dd122260385b5a0f7c79a656e780/transformed/profileinstaller-1.3.1/AndroidManifest.xml:21:5-44
 MERGED from [androidx.startup:startup-runtime:1.1.1] /home/codespace/.gradle/caches/8.9/transforms/802d15ab3f17d0d372794a38f6d4f737/transformed/startup-runtime-1.1.1/AndroidManifest.xml:21:5-23:41

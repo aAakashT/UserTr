@@ -64,7 +64,15 @@ The debug APK is produced at `app/build/outputs/apk/debug/app-debug.apk`.
   profile for browser microphone captures. Only derived EQ settings and the selected filename
   are retained; the sample itself is not stored or uploaded. This is a tone approximation,
   not pitch shifting or voice identity conversion. Site/WebView support can vary, and active
-  calls may need to reacquire the mic.
+  calls may need to reacquire the mic. The browser voice-filter toggle restarts the active page
+  so new WebRTC and recorder microphone captures use the selected processing. On WebView
+  versions supporting document-start scripts, the capture wrapper is installed before site
+  scripts run; otherwise it is installed during page loading. It affects microphone captures
+  inside this browser only, not other apps or browsers, and cannot guarantee compatibility with
+  sites that bypass `getUserMedia`.
+- Browser microphone captures and the local voice-test preview also provide robotic ring
+  modulation, distortion, and echo presets. These are sound effects, not sample-matched voice
+  conversion; that requires a compatible on-device model.
 - Transparent getUserMedia voice processing presets are optional and apply only to
   browser-originated WebRTC microphone capture. `Mic/camera idle` stops media capture
   and reloads the active page to end active tracks.
@@ -90,6 +98,9 @@ download source validation, executable-file detection, and private tab lifecycle
 ```bash
 ./gradlew testDebugUnitTest
 ```
+
+For browser microphone processing checks and Gradle/JDK troubleshooting, see
+[DEBUGGING.md](./DEBUGGING.md).
 
 GitHub Actions validates the Gradle wrapper, runs debug unit tests, builds the debug APK,
 and uploads it as `PrivateCall-Browser-debug-apk`.

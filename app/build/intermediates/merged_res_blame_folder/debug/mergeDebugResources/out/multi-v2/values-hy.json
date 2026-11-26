@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.privatecall.browser.app-mergeDebugResources-51:/values-hy/values-hy.xml",
+            "outputFile": "com.privatecall.browser.app-mergeDebugResources-52:/values-hy/values-hy.xml",
             "map": [
                 {
                     "source": "/home/codespace/.gradle/caches/8.9/transforms/cca0cc3e8911fcf4cb5d95a8f2af57dc/transformed/ui-release/res/values-hy/values-hy.xml",

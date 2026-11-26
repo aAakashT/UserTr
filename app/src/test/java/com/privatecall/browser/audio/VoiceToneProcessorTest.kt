@@ -37,4 +37,16 @@ class VoiceToneProcessorTest {
         assertTrue(samples[0] == Short.MAX_VALUE)
         assertTrue(samples.all { it.toInt() >= 0 })
     }
+
+    @Test
+    fun selectableEffectsChangeTheInputSignal() {
+        listOf("effect-robot", "effect-distorted", "effect-echo").forEach { preset ->
+            val samples = ShortArray(1024) { 8_000 }
+            val original = samples.copyOf()
+
+            VoiceToneProcessor(48_000f, preset).process(samples, samples.size, enabled = true)
+
+            assertTrue("$preset should change microphone samples", !original.contentEquals(samples))
+        }
+    }
 }

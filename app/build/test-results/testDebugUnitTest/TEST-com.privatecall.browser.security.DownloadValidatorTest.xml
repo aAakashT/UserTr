@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.privatecall.browser.security.DownloadValidatorTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-26T05:30:18" hostname="codespaces-c1629a" time="0.004">
+  <properties/>
+  <testcase name="rejectsPrivateAndExecutableSources" classname="com.privatecall.browser.security.DownloadValidatorTest" time="0.003"/>
+  <testcase name="allowsHttpsDownloads" classname="com.privatecall.browser.security.DownloadValidatorTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

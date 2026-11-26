@@ -7,6 +7,9 @@ import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.ScriptHandler
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -81,7 +84,8 @@ private fun voiceProcessingScript(preset: String, sampleBrightnessDb: Float): St
     val safeBrightnessDb = sampleBrightnessDb.takeIf { it.isFinite() }?.coerceIn(-6f, 6f) ?: 0f
     return """
     (function () {
-      if (!navigator.mediaDevices) return;
+      if (!navigator.mediaDevices ||
+        typeof navigator.mediaDevices.getUserMedia !== "function") return;
       window.__privateCallVoicePreset = "$preset";
       window.__privateCallVoiceBrightnessDb = $safeBrightnessDb;
       if (navigator.mediaDevices.__privateCallWrapped) {
@@ -174,6 +178,34 @@ private fun voiceProcessingScript(preset: String, sampleBrightnessDb: Float): St
             var telLow = context.createBiquadFilter(); telLow.type = "highpass"; telLow.frequency.value = 350;
             var telHigh = context.createBiquadFilter(); telHigh.type = "lowpass"; telHigh.frequency.value = 3200;
             source.connect(telLow); telLow.connect(telHigh); connectProcessed(telHigh);
+          } else if (preset.indexOf("robot") >= 0) {
+            var ringMod = context.createGain();
+            ringMod.gain.value = 0;
+            var modulator = context.createOscillator();
+            modulator.frequency.value = 35;
+            modulator.connect(ringMod.gain);
+            modulator.start();
+            source.connect(ringMod);
+            connectProcessed(ringMod);
+          } else if (preset.indexOf("distorted") >= 0) {
+            var shaper = context.createWaveShaper();
+            var curve = new Float32Array(4096);
+            for (var i = 0; i < curve.length; i++) {
+              var x = (i * 2) / (curve.length - 1) - 1;
+              curve[i] = Math.tanh(x * 4) / Math.tanh(4);
+            }
+            shaper.curve = curve;
+            shaper.oversample = "4x";
+            source.connect(shaper);
+            connectProcessed(shaper);
+          } else if (preset.indexOf("echo") >= 0) {
+            var dry = context.createGain(); dry.gain.value = 0.78;
+            var delay = context.createDelay(1); delay.delayTime.value = 0.24;
+            var feedback = context.createGain(); feedback.gain.value = 0.28;
+            var wet = context.createGain(); wet.gain.value = 0.42;
+            source.connect(dry); connectProcessed(dry);
+            source.connect(delay); delay.connect(feedback); feedback.connect(delay);
+            delay.connect(wet); connectProcessed(wet);
             } else {
               connectProcessed(source);
             }
@@ -214,12 +246,39 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
     var microphoneActive by remember { mutableStateOf(false) }
     var cameraActive by remember { mutableStateOf(false) }
     val voicePreferences = remember { PrivacyPreferences(context) }
-    val voicePreset = voicePreferences.voiceModulationPreset
+    var voiceModulationEnabled by remember {
+        mutableStateOf(voicePreferences.voiceModulationEnabled)
+    }
+    val voicePreset = if (voiceModulationEnabled) {
+        voicePreferences.voiceModulationPreset
+    } else {
+        "Off"
+    }
     var voiceSampleName by remember { mutableStateOf(voicePreferences.voiceSampleName) }
     var voiceSampleBrightnessDb by remember {
-        mutableStateOf(voicePreferences.voiceSampleBrightnessDb)
+        mutableStateOf(
+            if (voiceModulationEnabled) voicePreferences.voiceSampleBrightnessDb else 0f,
+        )
     }
-    val currentVoiceSampleBrightnessDb by rememberUpdatedState(voiceSampleBrightnessDb)
+    val currentVoiceProcessingScript by rememberUpdatedState(
+        voiceProcessingScript(voicePreset, voiceSampleBrightnessDb),
+    )
+    val voiceScriptHandlers = remember { mutableMapOf<Long, ScriptHandler>() }
+    val voiceScriptContents = remember { mutableMapOf<Long, String>() }
+    fun updateVoiceDocumentStartScript(webView: WebView, tabId: Long, script: String) {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT) ||
+            voiceScriptContents[tabId] == script
+        ) {
+            return
+        }
+        voiceScriptHandlers.remove(tabId)?.remove()
+        voiceScriptHandlers[tabId] = WebViewCompat.addDocumentStartJavaScript(
+            webView,
+            script,
+            setOf("https://*"),
+        )
+        voiceScriptContents[tabId] = script
+    }
     var voiceSampleError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(activeId) {
@@ -230,6 +289,8 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
     LaunchedEffect(tabIds) {
         val removedIds = webViews.keys.filterNot { it in tabIds }
         removedIds.forEach { id ->
+            voiceScriptHandlers.remove(id)?.remove()
+            voiceScriptContents.remove(id)
             webViews.remove(id)?.let { webView ->
                 stopMediaCapture(webView, reload = false)
                 webView.stopLoading()
@@ -240,6 +301,9 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
 
     DisposableEffect(webViews) {
         onDispose {
+            voiceScriptHandlers.values.toList().forEach { it.remove() }
+            voiceScriptHandlers.clear()
+            voiceScriptContents.clear()
             webViews.values.toList().forEach { webView ->
                 stopMediaCapture(webView, reload = false)
                 webView.stopLoading()
@@ -463,12 +527,38 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
                         voiceSampleError = error
                         if (error == null) {
                             voiceSampleName = voicePreferences.voiceSampleName
-                            voiceSampleBrightnessDb = voicePreferences.voiceSampleBrightnessDb
+                            voiceModulationEnabled = true
+                            voicePreferences.voiceModulationEnabled = true
+                            voiceSampleBrightnessDb = if (voiceModulationEnabled) {
+                                voicePreferences.voiceSampleBrightnessDb
+                            } else {
+                                0f
+                            }
                         }
                     }
                 }
             }) {
                 Text(if (voiceSampleName.isBlank()) "Use voice sample" else "Sample active")
+            }
+            TextButton(onClick = {
+                val enabled = !voiceModulationEnabled
+                voiceModulationEnabled = enabled
+                voicePreferences.voiceModulationEnabled = enabled
+                voiceSampleBrightnessDb = if (enabled) {
+                    voicePreferences.voiceSampleBrightnessDb
+                } else {
+                    0f
+                }
+                val preset = if (enabled) voicePreferences.voiceModulationPreset else "Off"
+                val script = voiceProcessingScript(
+                    preset,
+                    if (enabled) voicePreferences.voiceSampleBrightnessDb else 0f,
+                )
+                activeWebView?.let { updateVoiceDocumentStartScript(it, activeId, script) }
+                activeWebView?.evaluateJavascript(script, null)
+                stopMediaCapture(activeWebView)
+            }) {
+                Text(if (voiceModulationEnabled) "Voice filter on" else "Voice filter off")
             }
             if (voiceSampleName.isNotBlank()) {
                 TextButton(onClick = {
@@ -484,8 +574,8 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
         voiceSampleError?.let { Text("Voice sample error: $it") }
         if (voiceSampleName.isNotBlank()) {
             Text(
-                "Local tone profile: $voiceSampleName. Applies to new microphone captures. " +
-                    "This shapes tone, not voice identity or pitch.",
+                "Sample EQ profile: $voiceSampleName. Applies to new microphone captures in this browser; " +
+                    "it shapes tone, not voice identity or pitch. Re-enable the mic after toggling.",
             )
         }
 
@@ -578,15 +668,13 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
                                     ) {
                                         url?.let { viewModel.pageStarted(tab.id, it) }
                                         view?.evaluateJavascript(
-                                            voiceProcessingScript(
-                                                voicePreset,
-                                                currentVoiceSampleBrightnessDb,
-                                            ),
+                                            currentVoiceProcessingScript,
                                             null,
                                         )
                                     }
 
                                     override fun onPageFinished(view: WebView?, url: String?) {
+                                        view?.evaluateJavascript(currentVoiceProcessingScript, null)
                                         viewModel.pageFinished(tab.id, view?.title, url)
                                         viewModel.updateHistoryState(
                                             tab.id,
@@ -595,6 +683,11 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
                                         )
                                     }
                                 }
+                                updateVoiceDocumentStartScript(
+                                    this,
+                                    tab.id,
+                                    currentVoiceProcessingScript,
+                                )
                                 loadUrl(tab.url)
                             }
                         },
@@ -610,12 +703,11 @@ fun BrowserScreen(viewModel: BrowserViewModel, privateSession: Boolean) {
                                 if (!tab.private) {
                                     cookieManager.setAcceptThirdPartyCookies(webView, false)
                                 }
-                                webView.evaluateJavascript(
-                                    voiceProcessingScript(
-                                        voicePreset,
-                                        currentVoiceSampleBrightnessDb,
-                                    ),
-                                    null,
+                                webView.evaluateJavascript(currentVoiceProcessingScript, null)
+                                updateVoiceDocumentStartScript(
+                                    webView,
+                                    tab.id,
+                                    currentVoiceProcessingScript,
                                 )
                             }
                             if (webView.url != tab.url) {

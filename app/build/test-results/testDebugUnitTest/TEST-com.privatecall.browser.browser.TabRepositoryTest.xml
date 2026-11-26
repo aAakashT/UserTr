@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.privatecall.browser.browser.TabRepositoryTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-26T05:30:18" hostname="codespaces-c1629a" time="0.051">
+  <properties/>
+  <testcase name="privateTabLifecycle" classname="com.privatecall.browser.browser.TabRepositoryTest" time="0.045"/>
+  <testcase name="closingLastTabCreatesReplacement" classname="com.privatecall.browser.browser.TabRepositoryTest" time="0.001"/>
+  <testcase name="openingNewTabSelectsBlankTab" classname="com.privatecall.browser.browser.TabRepositoryTest" time="0.0"/>
+  <testcase name="switchingTabsRestoresEachTabsCurrentUrl" classname="com.privatecall.browser.browser.TabRepositoryTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

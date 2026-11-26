@@ -83,6 +83,7 @@ fun SettingsScreen() {
 
         Text("Legitimate VoIP audio")
         Text("Transparent voice processing (applies only to new getUserMedia captures)")
+        Text("Robotic, distortion, and echo effects alter voice texture. Matching the uploaded sample needs a compatible local conversion model.")
 
         val presetNames = remember(voicePreset.value) {
             mutableStateMapOf<String, String>().apply {
@@ -96,6 +97,7 @@ fun SettingsScreen() {
             onClick = {
                 voicePreset.value = "Off"
                 privacyPreferences.voiceModulationPreset = "Off"
+                privacyPreferences.voiceModulationEnabled = false
             },
             label = { Text("Off") },
         )
@@ -105,6 +107,7 @@ fun SettingsScreen() {
                 onClick = {
                     voicePreset.value = presetId
                     privacyPreferences.voiceModulationPreset = presetId
+                    privacyPreferences.voiceModulationEnabled = true
                 },
                 label = { Text(presetNames[presetId] ?: presetId) },
             )
@@ -115,10 +118,11 @@ fun SettingsScreen() {
                     privacyPreferences.setVoicePresetName(presetId, newName)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("${presetId.substringBefore('-').replaceFirstChar { it.uppercase() }} ${presetId.substringAfter('-')} name") },
+                label = { Text("${PrivacyPreferences.defaultVoicePresetName(presetId)} name") },
                 singleLine = true,
             )
         }
+        Text("Speaker and Bluetooth settings route playback only; they do not alter microphone audio.")
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

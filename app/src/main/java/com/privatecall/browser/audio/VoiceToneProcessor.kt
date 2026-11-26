@@ -2,11 +2,26 @@ package com.privatecall.browser.audio
 
 import kotlin.math.PI
 import kotlin.math.exp
+import kotlin.math.sin
+import kotlin.math.tanh
 
 internal class VoiceToneProcessor(
     sampleRate: Float,
     preset: String,
 ) {
+    private enum class Effect {
+        NONE,
+        ROBOT,
+        DISTORTION,
+        ECHO,
+    }
+
+    private val effect = when {
+        preset.contains("robot") -> Effect.ROBOT
+        preset.contains("distorted") -> Effect.DISTORTION
+        preset.contains("echo") -> Effect.ECHO
+        else -> Effect.NONE
+    }
     private val filters = when {
         preset.contains("deep") -> listOf(Filter(sampleRate, 1_150f, highPass = false))
         preset.contains("bright") || preset.contains("crisp") ->
@@ -36,12 +51,38 @@ internal class VoiceToneProcessor(
         else -> 1f
     }
 
+    private val echoBuffer = if (effect == Effect.ECHO) {
+        FloatArray((sampleRate * 0.24f).toInt().coerceAtLeast(1))
+    } else {
+        FloatArray(0)
+    }
+    private val modulationPhaseIncrement = 2.0 * PI * 35.0 / sampleRate.toDouble()
+    private var echoIndex = 0
+    private var modulationPhase = 0.0
+
     fun process(samples: ShortArray, length: Int, enabled: Boolean) {
         if (!enabled) return
         for (index in 0 until length) {
             val input = samples[index] / 32768f
             var output = input
             filters.forEach { output = it.process(output) }
+            output = when (effect) {
+                Effect.ROBOT -> {
+                    modulationPhase += modulationPhaseIncrement
+                    if (modulationPhase >= 2.0 * PI) modulationPhase -= 2.0 * PI
+                    output * sin(modulationPhase).toFloat()
+                }
+                Effect.DISTORTION -> {
+                    (tanh((output * 4f).toDouble()) / tanh(4.0)).toFloat()
+                }
+                Effect.ECHO -> {
+                    val delayed = echoBuffer[echoIndex]
+                    echoBuffer[echoIndex] = (output + delayed * 0.28f).coerceIn(-1f, 1f)
+                    echoIndex = (echoIndex + 1) % echoBuffer.size
+                    output * 0.78f + delayed * 0.42f
+                }
+                Effect.NONE -> output
+            }
             output *= outputGain
             samples[index] = (output.coerceIn(-1f, 1f) * 32767f).toInt().toShort()
         }
